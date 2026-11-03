@@ -1,0 +1,36 @@
+name = "i2sonic"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Workers AI: free voices (MeloTTS, Aura) with no extra API key.
+[ai]
+binding = "AI"
+
+# Plain settings. Change these and run `npm run deploy` again; no reflash needed.
+[vars]
+GEMINI_MODEL = "gemini-3.5-flash-lite"
+MAX_REPLY_CHARS = "400"            # spoken replies; ~25 s of speech at most
+
+# Voices, tried in this order until one works.
+#   melotts = Workers AI MeloTTS (~500 min/day free, MP3)
+#   aura    = Workers AI Deepgram Aura-1 (~50 replies/day free, nicer voice)
+#   gemini  = Gemini TTS (~10/day free)
+TTS_PROVIDERS = "melotts,aura,gemini"
+MELO_LANG = "en"
+AURA_SPEAKER = "orion"             # angus, asteria, arcas, orion, orpheus, athena, luna, zeus, perseus, helios, hera, stella
+GEMINI_TTS_MODEL = "gemini-3.8-flash-lite-tts"
+GEMINI_VOICE = "Charon"
+TTS_STYLE = "calm, clear and friendly, like a helpful assistant"
+
+# Hearing (speech to text), tried in this order until one works.
+#   workers = Workers AI Whisper large-v3-turbo (no extra key, ~4 neurons per question)
+#   groq    = Groq Whisper large-v3-turbo (needs: npx wrangler secret put GROQ_API_KEY)
+STT_PROVIDERS = "workers,groq"
+STT_LANG = "en"
+STT_HINT = "A person talking to a voice assistant named Nexa."
+
+# Secrets are NOT set here. Set them once with:
+#   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put DEVICE_TOKEN
+#   npx wrangler secret put GROQ_API_KEY      (optional: Whisper fallback)
+# For local testing, put them in a .dev.vars file instead (see .dev.vars.example).

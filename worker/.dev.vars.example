@@ -1,0 +1,4 @@
+# Copy this file to .dev.vars for `npx wrangler dev` (local testing only).
+# .dev.vars is never uploaded. Don't commit it.
+GEMINI_API_KEY=paste-your-gemini-key-here
+DEVICE_TOKEN=make-up-a-long-random-string

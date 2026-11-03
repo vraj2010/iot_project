@@ -1,0 +1,14 @@
+{
+  "name": "i2sonic-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "I2Sonic cloud orchestrator on Cloudflare Workers (Phase 1: text chat via Gemini)",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "logs": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.1"
+  }
+}

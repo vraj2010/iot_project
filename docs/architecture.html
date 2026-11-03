@@ -1,0 +1,424 @@
+<title>Friday System Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  /* layout: three swimlanes (speaker / laptop / cloud) read left-to-right for runtime flow;
+     a second schematic-style figure below reads power top-down, signal left-to-right */
+  :root{
+    color-scheme: dark;
+    --bg:#0a0e13;
+    --panel:#121923;
+    --panel-2:#17202c;
+    --border:#28333f;
+    --border-soft:#1d2733;
+    --fg:#e7edf3;
+    --muted:#8a99a8;
+    --dim:#5c6b7a;
+    --power:#ef6a4c;
+    --signal:#49c8c0;
+    --cloud:#a483e0;
+    --fallback:#e0a63c;
+    --ground:#5a6978;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--sans);
+    padding-left:max(16px, env(safe-area-inset-left,0px));
+    padding-right:max(16px, env(safe-area-inset-right,0px));
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding-block:36px 64px}
+  header{margin-bottom:8px}
+  .kicker{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--signal);margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--mono);font-weight:600;font-size:clamp(26px,4vw,38px);
+    margin:0 0 10px;letter-spacing:-.01em;text-wrap:balance;
+  }
+  .lede{color:var(--muted);max-width:66ch;line-height:1.55;margin:0 0 6px;font-size:15px}
+  .lede b{color:var(--fg);font-weight:600}
+  .meta{color:var(--dim);font-family:var(--mono);font-size:12px;margin:0 0 36px}
+
+  section{margin-top:52px}
+  .fig-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .fig-num{
+    font-family:var(--mono);font-size:12px;color:var(--bg);background:var(--signal);
+    padding:2px 8px;border-radius:4px;font-weight:600;
+  }
+  .fig-head h2{font-family:var(--mono);font-size:17px;font-weight:600;margin:0}
+  .fig-sub{color:var(--muted);font-size:13.5px;margin:0 0 16px;max-width:72ch;line-height:1.5}
+
+  .scroller{
+    overflow-x:auto;border:1px solid var(--border);border-radius:14px;
+    background:linear-gradient(180deg,var(--panel),var(--bg));
+    padding:4px;
+  }
+  figure{margin:0;min-width:760px}
+  figcaption{
+    font-family:var(--mono);font-size:11.5px;color:var(--dim);
+    padding:10px 18px 4px;border-top:1px solid var(--border-soft);margin-top:2px;
+  }
+  svg{display:block;width:100%;height:auto}
+
+  svg text{font-family:var(--sans);fill:var(--fg)}
+  .lane-label{font-family:var(--mono);font-size:12px;letter-spacing:.08em;fill:var(--muted)}
+  .box-title{font-size:13px;font-weight:600;fill:var(--fg)}
+  .box-sub{font-size:11px;fill:var(--muted)}
+  .box-note{font-family:var(--mono);font-size:10.5px;fill:var(--dim)}
+  .edge-label{font-family:var(--mono);font-size:10.5px}
+  .lane{fill:var(--panel);stroke:var(--border-soft);stroke-width:1.5}
+  .box{fill:var(--panel-2);stroke:var(--border);stroke-width:1.5}
+  .box-dash{fill:var(--panel-2);stroke:var(--dim);stroke-width:1.5;stroke-dasharray:5 4}
+  .bus{fill:var(--panel-2);stroke:var(--ground);stroke-width:1.5;stroke-dasharray:3 4}
+
+  .legend{display:flex;flex-wrap:wrap;gap:18px 26px;margin-top:18px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .sw{width:22px;height:3px;border-radius:2px;display:inline-block}
+  .sw.dash{background:repeating-linear-gradient(90deg,currentColor 0 6px,transparent 6px 10px)}
+
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+  caption{text-align:left;font-family:var(--mono);font-size:11px;color:var(--dim);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase}
+  th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border-soft)}
+  th{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;font-weight:500}
+  td:first-child{font-family:var(--mono);color:var(--signal);white-space:nowrap}
+  td:last-child{color:var(--muted);white-space:nowrap}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;padding:4px 16px;background:var(--panel)}
+
+  footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border-soft);color:var(--dim);font-family:var(--mono);font-size:11.5px}
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="kicker">Clarivis / Friday — ESP32-S3 smart speaker</p>
+    <h1>Friday System Map</h1>
+    <p class="lede">Two views of the same build: <b>Fig. 1</b> traces a spoken question from the speaker's mic to the reply in your ear — laptop first, Cloudflare Worker if the laptop's off, on-device SAM if nothing answers. <b>Fig. 2</b> is the board-level wiring on the ESP32‑S3 itself — where 5&nbsp;V comes in, where it drops to 3.3&nbsp;V, and which pins carry audio versus control.</p>
+    <p class="meta">D:\Projects\Friday — as of Oct 2026</p>
+  </header>
+
+  <section>
+    <div class="fig-head"><span class="fig-num">FIG. 1</span><h2>Data &amp; control flow — asking Friday something</h2></div>
+    <p class="fig-sub">Solid teal is the everyday path. Purple is a network hop to a cloud service. Amber dashed is the fallback taken only when the step before it fails. Gray dotted is the separate document-upload path, which never touches the speaker.</p>
+
+    <div class="scroller">
+      <figure>
+        <svg viewBox="0 0 1320 820" role="img" aria-label="Flow diagram: the ESP32-S3 speaker talks to the laptop server over WiFi (UDP discovery, HTTP 8765); the laptop's ears, hearing, local intents, brain, cortex, memory, voice and music stages call out to Gemini, Supabase and the Cortex upload service; if the laptop is unreachable the speaker falls back to a Cloudflare Worker, which calls Gemini, Groq and Workers AI; if that fails too the speaker falls back to its own offline SAM voice.">
+          <defs>
+            <marker id="ah-signal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#49c8c0"/>
+            </marker>
+            <marker id="ah-cloud" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#a483e0"/>
+            </marker>
+            <marker id="ah-fallback" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#e0a63c"/>
+            </marker>
+            <marker id="ah-ingest" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#5a6978"/>
+            </marker>
+          </defs>
+
+          <!-- lanes -->
+          <rect class="lane" x="40" y="40" width="260" height="740" rx="14"/>
+          <text class="lane-label" x="60" y="66">ESP32‑S3 · SPEAKER</text>
+
+          <rect class="lane" x="360" y="40" width="480" height="740" rx="14"/>
+          <text class="lane-label" x="380" y="66">LAPTOP · server.py  (:8765 / UDP :5006)</text>
+
+          <rect class="lane" x="900" y="40" width="380" height="740" rx="14"/>
+          <text class="lane-label" x="920" y="66">CLOUD</text>
+
+          <!-- lane 1: speaker -->
+          <rect class="box" x="60" y="90" width="220" height="50" rx="8"/>
+          <text class="box-title" x="74" y="112">Wi‑Fi radio</text>
+          <text class="box-sub" x="74" y="128">discovery + HTTP client</text>
+
+          <rect class="box" x="60" y="170" width="220" height="50" rx="8"/>
+          <text class="box-title" x="74" y="192">BOOT button</text>
+          <text class="box-sub" x="74" y="208">push‑to‑talk · GPIO0</text>
+
+          <rect class="box" x="60" y="250" width="220" height="50" rx="8"/>
+          <text class="box-title" x="74" y="272">Mic in</text>
+          <text class="box-sub" x="74" y="288">MAX4466, analog (temp.)</text>
+
+          <rect class="box" x="60" y="330" width="220" height="50" rx="8"/>
+          <text class="box-title" x="74" y="352">I2S audio out</text>
+          <text class="box-sub" x="74" y="368">→ amp → speaker (Fig. 2)</text>
+
+          <rect class="box-dash" x="60" y="680" width="220" height="70" rx="8"/>
+          <text class="box-title" x="74" y="702">SAM offline voice</text>
+          <text class="box-sub" x="74" y="718">last resort —</text>
+          <text class="box-sub" x="74" y="732">no network, no laptop</text>
+
+          <!-- lane 2: laptop stack -->
+          <rect class="box" x="390" y="90" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="113">Ears</text>
+          <text class="box-sub" x="404" y="130">wake word (openWakeWord) + Silero VAD + mic capture</text>
+
+          <rect class="box" x="390" y="170" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="193">Hearing</text>
+          <text class="box-sub" x="404" y="210">faster‑whisper, local STT</text>
+
+          <rect class="box" x="390" y="250" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="273">Local intents</text>
+          <text class="box-sub" x="404" y="290">regex + MiniLM embeddings — play/pause/volume, 0 tokens, ~5 ms</text>
+
+          <rect class="box" x="390" y="330" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="353">Brain</text>
+          <text class="box-sub" x="404" y="370">Gemini call + tools (weather, web search)</text>
+
+          <rect class="box" x="390" y="410" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="433">Cortex</text>
+          <text class="box-sub" x="404" y="450">hybrid vector + keyword retrieval — cortex.search()</text>
+
+          <rect class="box" x="390" y="490" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="513">Memory</text>
+          <text class="box-sub" x="404" y="530">PostgreSQL · friday‑pg, Docker :5432</text>
+
+          <rect class="box" x="390" y="570" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="593">Voice</text>
+          <text class="box-sub" x="404" y="610">edge‑tts — en‑IE‑Emily (Irish neural)</text>
+
+          <rect class="box" x="390" y="650" width="440" height="55" rx="8"/>
+          <text class="box-title" x="404" y="673">Music</text>
+          <text class="box-sub" x="404" y="690">local library (D:\songs) + iTunes Search metadata</text>
+
+          <!-- lane 3: cloud -->
+          <rect class="box" x="930" y="90" width="340" height="60" rx="8"/>
+          <text class="box-title" x="944" y="115">Gemini API</text>
+          <text class="box-sub" x="944" y="132">LLM · embeddings</text>
+
+          <rect class="box" x="930" y="190" width="340" height="60" rx="8"/>
+          <text class="box-title" x="944" y="215">Supabase</text>
+          <text class="box-sub" x="944" y="232">pgvector · project “i2sonic”, Mumbai</text>
+
+          <rect class="box" x="930" y="290" width="340" height="60" rx="8"/>
+          <text class="box-title" x="944" y="315">cortex‑web</text>
+          <text class="box-sub" x="944" y="332">Vercel — upload page + ingest</text>
+
+          <rect class="box" x="930" y="400" width="340" height="60" rx="8"/>
+          <text class="box-title" x="944" y="425">Cloudflare Worker</text>
+          <text class="box-sub" x="944" y="442">backup brain — i2sonic.*.workers.dev</text>
+
+          <rect class="box" x="930" y="490" width="160" height="50" rx="8"/>
+          <text class="box-title" x="944" y="512" style="font-size:12px">Groq</text>
+          <text class="box-sub" x="944" y="528">backup STT</text>
+
+          <rect class="box" x="1110" y="490" width="160" height="50" rx="8"/>
+          <text class="box-title" x="1124" y="512" style="font-size:12px">Workers AI</text>
+          <text class="box-sub" x="1124" y="528">MeloTTS / Aura‑1</text>
+
+          <rect class="box" x="930" y="680" width="340" height="60" rx="8"/>
+          <text class="box-title" x="944" y="705">Browser</text>
+          <text class="box-sub" x="944" y="722">any device — document upload</text>
+
+          <!-- primary signal path: speaker <-> laptop -->
+          <path d="M280,115 L390,115" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="300" y="105" fill="#49c8c0">UDP 5006 discover · HTTP 8765</text>
+
+          <path d="M390,197 L330,197 L330,260 L280,260" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="332" y="245" fill="#49c8c0">PCM audio</text>
+
+          <path d="M830,675 L850,675 L850,350 L280,350" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="600" y="340" fill="#49c8c0">reply audio (mp3 / stream) over HTTP 8765</text>
+
+          <!-- internal laptop chain -->
+          <path d="M610,145 L610,170" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <path d="M610,225 L610,250" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="618" y="242" fill="#49c8c0">transcript</text>
+          <path d="M610,305 L610,330" class="edge" stroke="#e0a63c" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#ah-fallback)"/>
+          <text class="edge-label" x="618" y="322" fill="#e0a63c">no local match</text>
+          <path d="M610,385 L610,410" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="618" y="402" fill="#49c8c0">doc question</text>
+          <path d="M610,465 L610,490" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="618" y="482" fill="#49c8c0">remember / recall</text>
+          <path d="M610,545 L610,570" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="618" y="562" fill="#49c8c0">reply text</text>
+          <path d="M350,277 C320,277 320,598 390,598" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-signal)"/>
+          <text class="edge-label" x="252" y="440" fill="#49c8c0" transform="rotate(-90 252 440)">instant reply, bypass Gemini</text>
+          <path d="M830,678 L860,678 L860,357 L280,357" class="edge" stroke="#49c8c0" stroke-width="1.5" fill="none" opacity="0"/>
+
+          <!-- laptop -> cloud -->
+          <path d="M830,360 L930,120" class="edge" stroke="#a483e0" stroke-width="2" fill="none" marker-end="url(#ah-cloud)"/>
+          <text class="edge-label" x="836" y="240" fill="#a483e0">HTTPS</text>
+          <path d="M830,440 L930,220" class="edge" stroke="#a483e0" stroke-width="2" fill="none" marker-end="url(#ah-cloud)"/>
+          <text class="edge-label" x="836" y="360" fill="#a483e0">SQL · cortex.search()</text>
+
+          <!-- fallback: speaker -> worker, worker -> cloud, worker -> speaker -->
+          <path d="M280,115 C560,30 820,30 930,420" class="edge" stroke="#e0a63c" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#ah-fallback)"/>
+          <text class="edge-label" x="560" y="38" fill="#e0a63c">HTTPS — laptop unreachable</text>
+
+          <path d="M1100,430 L1100,150" class="edge" stroke="#a483e0" stroke-width="2" fill="none" marker-end="url(#ah-cloud)"/>
+          <path d="M1010,490 L1010,460" class="edge" stroke="#a483e0" stroke-width="2" fill="none" marker-end="url(#ah-cloud)"/>
+          <path d="M1190,490 L1190,460" class="edge" stroke="#a483e0" stroke-width="2" fill="none" marker-end="url(#ah-cloud)"/>
+
+          <path d="M930,430 C700,470 320,540 280,345" class="edge" stroke="#e0a63c" stroke-width="2" stroke-dasharray="6 5" fill="none" marker-end="url(#ah-fallback)"/>
+          <text class="edge-label" x="500" y="500" fill="#e0a63c">reply audio, Worker path</text>
+
+          <!-- speaker last resort -->
+          <path d="M170,330 C170,500 170,600 170,680" class="edge" stroke="#e0a63c" stroke-width="2" stroke-dasharray="4 4" fill="none" marker-end="url(#ah-fallback)"/>
+          <text class="edge-label" x="178" y="500" fill="#e0a63c" transform="rotate(90 178 500)">nothing answers</text>
+
+          <!-- ingest path (separate, gray) -->
+          <path d="M1100,680 L1100,350" class="edge" stroke="#5a6978" stroke-width="2" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-ingest)"/>
+          <text class="edge-label" x="1108" y="520" fill="#5a6978">HTTPS upload</text>
+          <path d="M1070,290 C1000,250 980,240 1070,220" class="edge" stroke="#5a6978" stroke-width="2" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-ingest)"/>
+          <text class="edge-label" x="960" y="246" fill="#5a6978">write chunks</text>
+          <path d="M1090,290 C1095,220 1085,150 1070,110" class="edge" stroke="#5a6978" stroke-width="2" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-ingest)"/>
+          <text class="edge-label" x="1100" y="180" fill="#5a6978">embed</text>
+        </svg>
+        <figcaption>D:\Projects\Friday\server (Python) · firmware (ESP‑IDF) · worker (Cloudflare) · cortex-web (Vercel)</figcaption>
+      </figure>
+    </div>
+
+    <div class="legend">
+      <span><i class="sw" style="background:#49c8c0"></i>everyday path</span>
+      <span><i class="sw" style="background:#a483e0"></i>cloud API call</span>
+      <span><i class="sw dash" style="color:#e0a63c"></i>fallback (previous step failed)</span>
+      <span><i class="sw dash" style="color:#5a6978"></i>document ingest (separate from voice loop)</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="fig-head"><span class="fig-num">FIG. 2</span><h2>Hardware — power &amp; signal flow on the S3</h2></div>
+    <p class="fig-sub">Coral is the power rail, gray dashed is the shared ground return, teal is audio data, amber is a control/shutdown line. The amp runs off the S3's own 3.3&nbsp;V — USB 5&nbsp;V was tried first and measured audibly hissier.</p>
+
+    <div class="scroller">
+      <figure>
+        <svg viewBox="0 0 1040 620" role="img" aria-label="Hardware diagram: USB 5V feeds the ESP32-S3, whose onboard regulator drops to a 3.3V rail; that rail powers the MAX98357A amplifier and the MAX4466 microphone; the S3's I2S pins (BCLK 15, LRC 16, DIN 17) carry audio data to the amp, GPIO18 is the amp's shutdown control, the amp's GAIN pin is strapped to ground for mono, and the amp drives the speaker directly with no output capacitor; a pending INMP441 digital microphone will replace the MAX4466; all grounds share one bus.">
+          <defs>
+            <marker id="ah-power" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#ef6a4c"/>
+            </marker>
+            <marker id="ah-sig2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#49c8c0"/>
+            </marker>
+            <marker id="ah-ctrl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#e0a63c"/>
+            </marker>
+            <marker id="ah-gnd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <polygon points="0,0 10,5 0,10" fill="#5a6978"/>
+            </marker>
+          </defs>
+
+          <!-- USB -->
+          <rect class="box" x="40" y="70" width="160" height="50" rx="8"/>
+          <text class="box-title" x="54" y="92">USB 5 V in</text>
+          <text class="box-sub" x="54" y="108">power + data</text>
+
+          <!-- ESP32-S3 -->
+          <rect class="box" x="260" y="40" width="300" height="300" rx="10"/>
+          <text class="box-title" x="276" y="66">ESP32‑S3‑DevKitC‑1 N16R8</text>
+          <text class="box-note" x="276" y="88">onboard 3.3 V regulator</text>
+          <text class="box-note" x="276" y="106">BOOT = GPIO0 (push‑to‑talk)</text>
+          <text class="box-note" x="276" y="124">I2S: BCLK 15 · LRC 16 · DIN 17</text>
+          <text class="box-note" x="276" y="142">shutdown ctl: GPIO18</text>
+          <text class="box-note" x="276" y="160">mic in: analog ADC (temp.)</text>
+          <text class="box-note" x="276" y="178">Wi‑Fi radio →</text>
+          <text class="box-note" x="276" y="196" fill="#49c8c0">see Fig. 1</text>
+
+          <!-- 3V3 rail -->
+          <rect class="box" x="620" y="150" width="100" height="40" rx="6"/>
+          <text class="box-title" x="638" y="175" style="font-size:12px">3.3 V rail</text>
+
+          <!-- amp -->
+          <rect class="box" x="780" y="100" width="220" height="90" rx="8"/>
+          <text class="box-title" x="794" y="124">MAX98357A</text>
+          <text class="box-sub" x="794" y="140">I2S Class‑D amp</text>
+          <text class="box-note" x="794" y="158">GAIN → GND (mono)</text>
+          <text class="box-note" x="794" y="176">filterless — no output caps</text>
+
+          <!-- speaker -->
+          <rect class="box" x="780" y="240" width="220" height="50" rx="8"/>
+          <text class="box-title" x="794" y="262">Speaker</text>
+          <text class="box-sub" x="794" y="278">8 Ω, direct drive</text>
+
+          <!-- mics -->
+          <rect class="box" x="40" y="400" width="220" height="60" rx="8"/>
+          <text class="box-title" x="54" y="424">MAX4466</text>
+          <text class="box-sub" x="54" y="440">analog mic — current, noisy</text>
+
+          <rect class="box-dash" x="40" y="480" width="220" height="60" rx="8"/>
+          <text class="box-title" x="54" y="504">INMP441</text>
+          <text class="box-sub" x="54" y="520">pending — WS 4 · SCK 5 · SD 6</text>
+
+          <!-- ground bus -->
+          <rect class="bus" x="40" y="570" width="960" height="30" rx="6"/>
+          <text class="box-note" x="54" y="590" fill="#8a99a8">shared ground</text>
+
+          <!-- power edges -->
+          <path d="M200,95 L260,95" class="edge" stroke="#ef6a4c" stroke-width="2" fill="none" marker-end="url(#ah-power)"/>
+          <text class="edge-label" x="206" y="86" fill="#ef6a4c">5 V</text>
+
+          <path d="M560,95 C600,95 600,170 620,170" class="edge" stroke="#ef6a4c" stroke-width="2" fill="none" marker-end="url(#ah-power)"/>
+          <text class="edge-label" x="572" y="86" fill="#ef6a4c">reg. out</text>
+
+          <path d="M720,170 L780,135" class="edge" stroke="#ef6a4c" stroke-width="2" fill="none" marker-end="url(#ah-power)"/>
+          <text class="edge-label" x="724" y="130" fill="#ef6a4c">3.3 V — not 5 V (hissy)</text>
+
+          <path d="M670,190 C670,330 300,370 260,430" class="edge" stroke="#ef6a4c" stroke-width="2" fill="none" marker-end="url(#ah-power)"/>
+          <text class="edge-label" x="440" y="380" fill="#ef6a4c">3.3 V</text>
+
+          <!-- signal edges -->
+          <path d="M560,170 L780,150" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-sig2)"/>
+          <text class="edge-label" x="588" y="150" fill="#49c8c0">I2S audio data</text>
+
+          <path d="M890,190 L890,240" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-sig2)"/>
+          <text class="edge-label" x="898" y="220" fill="#49c8c0">L/R out</text>
+
+          <path d="M260,430 L560,250" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-sig2)" opacity="0"/>
+          <path d="M260,425 C420,400 480,300 560,230" class="edge" stroke="#49c8c0" stroke-width="2" fill="none" marker-end="url(#ah-sig2)"/>
+          <text class="edge-label" x="330" y="390" fill="#49c8c0">analog in</text>
+
+          <path d="M260,505 C420,480 480,340 560,250" class="edge" stroke="#49c8c0" stroke-width="2" stroke-dasharray="5 4" fill="none" marker-end="url(#ah-sig2)"/>
+          <text class="edge-label" x="330" y="470" fill="#49c8c0">digital in (pending)</text>
+
+          <!-- control edge -->
+          <path d="M560,210 C650,210 700,200 780,165" class="edge" stroke="#e0a63c" stroke-width="2" fill="none" marker-end="url(#ah-ctrl)"/>
+          <text class="edge-label" x="588" y="200" fill="#e0a63c">SD / shutdown — GPIO18</text>
+
+          <!-- ground stubs -->
+          <path d="M120,120 L120,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)"/>
+          <path d="M400,340 L400,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)"/>
+          <path d="M890,190 L890,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)" opacity="0"/>
+          <path d="M850,190 L850,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)"/>
+          <path d="M890,290 L890,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)"/>
+          <path d="M150,460 L150,570" class="edge" stroke="#5a6978" stroke-width="1.5" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-gnd)"/>
+        </svg>
+        <figcaption>firmware/main — audio.c · player.c · cloud.c · net.c</figcaption>
+      </figure>
+    </div>
+
+    <div class="legend">
+      <span><i class="sw" style="background:#ef6a4c"></i>power rail</span>
+      <span><i class="sw" style="background:#49c8c0"></i>audio / signal</span>
+      <span><i class="sw" style="background:#e0a63c"></i>control line</span>
+      <span><i class="sw dash" style="color:#5a6978"></i>ground</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="fig-head"><h2 style="font-size:15px">Repo map</h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <caption>D:\Projects\Friday</caption>
+        <thead><tr><th>Folder</th><th>Role</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>db/</td><td>Memory database (Docker)</td><td>friday‑pg :5432 · Adminer :8080</td></tr>
+          <tr><td>server/</td><td>Laptop brain (Python)</td><td>server.py · :8765 / UDP :5006</td></tr>
+          <tr><td>firmware/</td><td>ESP32‑S3 firmware</td><td>ESP‑IDF 5.5</td></tr>
+          <tr><td>worker/</td><td>Backup brain</td><td>Cloudflare Worker</td></tr>
+          <tr><td>cortex-web/</td><td>Document upload + ingest</td><td>Vercel → Supabase pgvector</td></tr>
+          <tr><td>Cortex/</td><td>Original RAG project</td><td>parser reused only, not called live</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>generated for Friday / I2Sonic — Clarivis Intelligence</footer>
+</div>

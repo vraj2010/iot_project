@@ -1,0 +1,29 @@
+# Nexa's memory database. Copy .env.example to .env and set NEXA_DB_PASSWORD
+# (use the same password in server/.env as DATABASE_URL), then:  docker compose up -d
+#
+# 'name' pins the Compose project, so the data volume stays nexa-db_pgdata whatever folder
+# this runs from. That keeps the memories already stored in it.
+name: nexa-db
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: nexa-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nexa
+      POSTGRES_PASSWORD: "${NEXA_DB_PASSWORD:?set NEXA_DB_PASSWORD in db/.env}"
+      POSTGRES_DB: nexa
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8080"
+
+volumes:
+  pgdata:

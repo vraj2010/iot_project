@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "regions": ["bom1"],
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 300,
+      "excludeFiles": "{tests/**,public/**,sql/**,**/__pycache__/**,.pytest_cache/**,README.md,requirements-dev.txt,.env*}"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/index?__route=:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; base-uri 'none'; form-action 'self'" }
+      ]
+    }
+  ]
+}

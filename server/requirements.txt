@@ -1,0 +1,23 @@
+faster-whisper>=1.0.0
+numpy>=1.24
+requests>=2.31
+psycopg[binary]>=3.2
+# Irish female neural voice (Microsoft Edge read-aloud, online)
+edge-tts>=7.0
+# Free web search when Google Search grounding isn't available on the key
+ddgs>=9.0
+# Reads song tags and lengths for the music library
+mutagen>=1.47
+# Time zones on Windows (Python there has no built-in time zone database)
+tzdata ; sys_platform == "win32"
+# Windows voice (used when Piper isn't set up)
+pyttsx3>=2.90 ; sys_platform == "win32"
+# The laptop's ears: its microphone and the wake word ("hey jarvis", or your own "hey friday").
+# The speech detector (Silero) and the local command model (MiniLM) run on onnxruntime, tokenizers and
+# huggingface_hub, which faster-whisper already installs.
+sounddevice>=0.4.6
+openwakeword>=0.6
+# The laptop as the speaker (speaker.py): plays her voice and your music on a Bluetooth speaker, and reads
+# the board's BOOT button from its USB serial port. PyAV (decodes the MP3 voice and songs) comes with faster-whisper.
+av>=11
+pyserial>=3.5

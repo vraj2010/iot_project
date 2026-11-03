@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8
+uvicorn>=0.30
+python-dotenv>=1

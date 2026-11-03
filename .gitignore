@@ -1,0 +1,42 @@
+# --- secrets and machine-local settings (each has an .example next to it) ---
+.env
+.dev.vars
+secrets.h
+*.pem
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# --- server runtime files ---
+server/last_question.wav
+server/last_reply.wav
+server/last_reply.mp3
+server/reply.mp3
+server/latency*.log
+server/wake_test.log
+server/voice_cache/
+server/music_cache/
+server/.songlist.txt
+
+# --- ESP-IDF build output ---
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/managed_components/
+firmware/dependencies.lock
+
+# --- Worker ---
+worker/node_modules/
+worker/.wrangler/
+
+# --- editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- the original Cortex project: its own git repo (and its backend/.env.bak holds a real password) ---
+Cortex/
