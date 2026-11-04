@@ -111,7 +111,7 @@ def chat(messages: list[dict], tools: list[dict] | None = None, model: str | Non
     except GeminiError as exc:
         if "reasoning_effort" not in body or "400" not in str(exc):
             raise
-        print(f"[gemini] this model won't take reasoning_effort={reasoning}; using its default ({exc})")
+        print(f"[core] this model won't take reasoning_effort={reasoning}; using its default ({exc})")
         _reasoning_ok = False
         body.pop("reasoning_effort")
         data = _post(url, body, headers)
@@ -409,7 +409,7 @@ def _stream_once(url: str, headers: dict, body: dict, hedge_s: float | None, inf
                 attempt, kind, value = out.get(timeout=max(0.0, wait))
             except queue.Empty:
                 if winner is None and len(attempts) == 1 and hedge > 0 and time.time() - t0 < config.GEMINI_TIMEOUT:
-                    print(f"[gemini] nothing after {hedge:g} s; asking again on a fresh connection")
+                    print(f"[core] nothing after {hedge:g} s; asking again on a fresh connection")
                     info["hedged"] = True
                     launch(True)
                     continue
@@ -422,7 +422,7 @@ def _stream_once(url: str, headers: dict, body: dict, hedge_s: float | None, inf
                 attempt.failed = True
                 if all(a.failed for a in attempts):
                     if len(attempts) < 2 and _retryable(value):
-                        print(f"[gemini] {value}; trying again on a fresh connection")
+                        print(f"[core] {value}; trying again on a fresh connection")
                         info["hedged"] = True
                         launch(True)
                         continue
@@ -480,7 +480,7 @@ def chat_stream(messages: list[dict], tools: list[dict] | None = None, model: st
         except GeminiError as exc:
             if spoke or attempt or "reasoning_effort" not in body or "400" not in str(exc):
                 raise
-            print(f"[gemini] this model won't take reasoning_effort={reasoning}; using its default ({exc})")
+            print(f"[core] this model won't take reasoning_effort={reasoning}; using its default ({exc})")
             _reasoning_ok = False
 
 
@@ -514,7 +514,7 @@ def keepalive_start() -> None:
     def loop() -> None:
         t0 = time.time()
         ok = warm()
-        print(f"[gemini] connection {'ready' if ok else 'not ready yet'} ({int((time.time() - t0) * 1000)} ms)")
+        print(f"[core] connection {'ready' if ok else 'not ready yet'} ({int((time.time() - t0) * 1000)} ms)")
         while True:
             time.sleep(max(5.0, config.GEMINI_KEEPALIVE_S / 2))
             if time.time() - _last_used >= config.GEMINI_KEEPALIVE_S:

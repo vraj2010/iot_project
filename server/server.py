@@ -238,6 +238,7 @@ class Handler(BaseHTTPRequestHandler):
                                            # now, not after the S3 has got round to acknowledging the one before
     assistant: Assistant = None            # set in main()
     ears = None                            # ears.Ears when the laptop's mic is on (set in main())
+    active_turn: int = 0
 
     def log_message(self, fmt, *args) -> None:   # quiet; turns print their own summary
         pass
@@ -305,12 +306,21 @@ class Handler(BaseHTTPRequestHandler):
         a = self.assistant
         jb = a.jukebox
         router = getattr(a, "router", None)
-        self._json({"ok": True, "server": "nexa-local", "model": config.GEMINI_MODEL,
+        ears_status = self.ears.status() if self.ears else "off"
+        phase = "idle"
+        if isinstance(ears_status, dict) and ears_status.get("state") == "listening":
+            phase = "listening"
+        elif Handler.active_turn > 0 or (isinstance(ears_status, dict) and ears_status.get("deaf")):
+            phase = "thinking"
+        else:
+            phase = "idle"
+        self._json({"ok": True, "server": "nexa-local", "model": "Neural Core",
+                    "phase": phase,
                     "voice": a.tts.name, "stt": config.WHISPER_MODEL if a.stt else None,
                     "facts": a.memory.count_facts(), "web_search": config.WEB_SEARCH, "stream": a.stream_enabled(),
                     "documents": _documents_health(),
                     "music": {"songs": jb.count(), "ffmpeg": bool(jb.ffmpeg)} if jb else None,
-                    "ears": self.ears.status() if self.ears else "off",
+                    "ears": ears_status,
                     "local_commands": ("phrases + model" if router.embedder else "phrases") if router else "off"})
 
     # ------------------------------------------------------------ the laptop's ears
@@ -519,6 +529,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _turn(self, run) -> None:
         """Run one turn, turning its failures into replies the speaker can print."""
+        Handler.active_turn += 1
         try:
             run()
         except TurnError as exc:
@@ -532,6 +543,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"error": f"server error: {exc}"}, 500)
             except OSError:
                 pass
+        finally:
+            Handler.active_turn = max(0, Handler.active_turn - 1)
 
     def _first_voice(self, reply: str, **extra) -> tuple:
         try:
@@ -625,7 +638,7 @@ class Handler(BaseHTTPRequestHandler):
                      {"first_sentence_ms": timing.get("first_sentence_ms"), "ttft_ms": timing.get("ttft_ms"),
                       "hedged": timing.get("hedged"), "filler": reply.filler, "answer_ms": reply.answer_ms})
             print(f"[turn] {'typed' if typed else 'heard'} \"{heard}\" | "
-                  f"{'' if typed else f'Whisper {stt_ms} ms | '}Gemini {result['ms']} ms {_tools(result)}| "
+                  f"{'' if typed else f'Whisper {stt_ms} ms | '}Thinking {result['ms']} ms {_tools(result)}| "
                   f"{reply.voice.name} {reply.tts_ms} ms (streamed)\nnexa> {result['reply']}{_action(result)}"
                   f"{_cites(result)}")
             _save_reply(bytes(reply.audio), reply.voice.fmt)
@@ -691,7 +704,7 @@ class Handler(BaseHTTPRequestHandler):
         audio = self._stream(header, first, rest, backend, result.get("citations"))
         (result.get("timing") or {})["first_audio_ms"] = self.first_audio_ms
         _latency("typed", text, 0, result, tts_ms, self.first_audio_ms)
-        print(f"[turn] typed \"{text}\" | Gemini {result['ms']} ms {_tools(result)}| {backend.name} {tts_ms} ms\n"
+        print(f"[turn] typed \"{text}\" | Thinking {result['ms']} ms {_tools(result)}| {backend.name} {tts_ms} ms\n"
               f"nexa> {result['reply']}{_action(result)}{_cites(result)}")
         _save_reply(audio, backend.fmt)
         self._after(text, result)
@@ -734,7 +747,7 @@ class Handler(BaseHTTPRequestHandler):
                 result["timing"]["first_audio_ms"] = self.first_audio_ms
             _latency("spoken", heard, stt_ms, result, tts_ms, self.first_audio_ms)
             _save_reply(audio, backend.fmt)
-            print(f"[turn] heard \"{heard or '(nothing clear)'}\" | Whisper {stt_ms} ms | Gemini {result['ms']} ms "
+            print(f"[turn] heard \"{heard or '(nothing clear)'}\" | Whisper {stt_ms} ms | Thinking {result['ms']} ms "
                   f"{_tools(result)}| {backend.name} {tts_ms} ms\nnexa> {result['reply']}{_action(result)}"
                   f"{_cites(result)}")
         self._after(heard, result)
@@ -967,7 +980,7 @@ def run_test(a: Assistant, text: str | None, wav: str | None, music_state: str |
             print("[stt] nothing clear was heard")
             return
     result = a.think(text, music_state)
-    print(f"[gemini] {result['ms']} ms {_tools(result)}\nnexa> {result['reply']}{_action(result)}{_cites(result)}")
+    print(f"[thinking] {result['ms']} ms {_tools(result)}\nnexa> {result['reply']}{_action(result)}{_cites(result)}")
     t0 = time.time()
     backend, first, rest, _ms = a.voice_start(result["reply"])
     audio = first + b"".join(rest)

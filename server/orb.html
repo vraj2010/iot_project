@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXA // Autonomous IoT Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #030712;
+    --cyan: #00f0ff;
+    --cyan-glow: rgba(0, 240, 255, 0.4);
+    --cyan-dim: rgba(0, 240, 255, 0.12);
+    --purple: #a855f7;
+    --card-bg: rgba(15, 23, 42, 0.75);
+    --border: rgba(0, 240, 255, 0.25);
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background-image: 
+      radial-gradient(circle at 50% 30%, rgba(0, 240, 255, 0.08) 0%, transparent 60%),
+      linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+  }
+
+  /* Scanline effect */
+  body::after {
+    content: " ";
+    position: fixed; inset: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 28px;
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    background: rgba(3, 7, 18, 0.8);
+    z-index: 10;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 14px;
+    font-family: 'Orbitron', monospace;
+    font-size: 20px; font-weight: 900;
+    letter-spacing: 0.2em;
+    color: var(--cyan);
+    text-shadow: 0 0 15px var(--cyan-glow);
+  }
+  .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.3em; font-family: 'JetBrains Mono', monospace; }
+  
+  .badges { display: flex; gap: 10px; align-items: center; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.pulse { animation: blink 1.4s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* Main Workspace */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 16px;
+    padding: 16px 24px;
+    height: calc(100vh - 145px);
+  }
+
+  /* Left: Orb Visualizer & Chat Stream */
+  .left-pane {
+    display: flex; flex-direction: column;
+    gap: 14px;
+    height: 100%;
+  }
+
+  .visualizer-card {
+    flex: 1;
+    position: relative;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 10px;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 30px rgba(0, 240, 255, 0.05);
+  }
+  canvas#orbCanvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+  }
+  .orb-status {
+    position: absolute; bottom: 20px;
+    font-family: 'Orbitron', monospace; font-size: 14px;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cyan);
+    background: rgba(3, 7, 18, 0.7);
+    padding: 6px 18px; border-radius: 20px;
+    border: 1px solid var(--border);
+    text-shadow: 0 0 10px var(--cyan);
+    z-index: 2;
+  }
+
+  /* Chat Feed */
+  .chat-card {
+    height: 220px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border-radius: 10px;
+    backdrop-filter: blur(12px);
+    padding: 14px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .msg-row { display: flex; flex-direction: column; gap: 4px; }
+  .msg-user { color: #f8fafc; font-weight: 600; }
+  .msg-nexa { color: var(--cyan); line-height: 1.4; }
+  .msg-tag {
+    align-self: flex-start;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    color: var(--muted);
+    background: rgba(255,255,255,0.05);
+    padding: 2px 6px; border-radius: 3px;
+  }
+
+  /* Right Pane: Telemetry & Live Terminal */
+  .right-pane {
+    display: flex; flex-direction: column;
+    gap: 14px;
+    height: 100%;
+  }
+
+  .terminal-card {
+    flex: 1;
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border);
+    background: rgba(2, 6, 23, 0.95);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .term-header {
+    background: rgba(15, 23, 42, 0.9);
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: var(--cyan); letter-spacing: 0.1em;
+  }
+  .term-body {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .term-line-tool { color: var(--purple); }
+  .term-line-info { color: var(--cyan); }
+  .term-line-time { color: var(--amber); }
+
+  /* Quick Actions Bar */
+  footer {
+    padding: 10px 24px;
+    background: rgba(3, 7, 18, 0.85);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px;
+    z-index: 10;
+  }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: var(--cyan-dim);
+    color: var(--cyan);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 6px 12px; border-radius: 6px;
+    cursor: pointer; font-family: 'Rajdhani', sans-serif;
+    font-size: 13px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .chip:hover {
+    background: rgba(0, 240, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 0 10px var(--cyan-glow);
+  }
+
+  .controls { display: flex; align-items: center; gap: 10px; flex: 1; max-width: 500px; }
+  .input-box {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif; font-size: 14px;
+    outline: none;
+  }
+  .input-box:focus { border-color: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow); }
+  
+  .btn-mic {
+    background: linear-gradient(135deg, #00f0ff, #0284c7);
+    color: #030712;
+    border: none;
+    font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 900;
+    padding: 8px 16px; border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 0 15px var(--cyan-glow);
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-mic:hover { transform: scale(1.04); box-shadow: 0 0 25px var(--cyan); }
+  .btn-mic.active { background: linear-gradient(135deg, #ef4444, #b91c1c); color: #fff; box-shadow: 0 0 25px var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div>NEXA</div>
+    <div class="brand-sub">EDGE AI // IOT VOICE SYSTEM</div>
+  </div>
+  <div class="badges">
+    <div class="badge"><span class="dot" id="dbDot"></span>DB: <span id="dbStatus">nexa-pg</span></div>
+    <div class="badge"><span class="dot pulse"></span>CORE: <span id="modelStatus">Neural Core</span></div>
+    <div class="badge"><span class="dot"></span>VOICE: <span id="voiceStatus">EmilyNeural</span></div>
+    <div class="badge"><span class="dot"></span>WAKE: <span id="wakeStatus">Hey Nexa</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- Left Side: Interactive Orb & Chat Feed -->
+  <div class="left-pane">
+    <div class="visualizer-card">
+      <canvas id="orbCanvas"></canvas>
+      <div class="orb-status" id="orbStatusText">System Idle // Listening for "Hey Nexa"</div>
+    </div>
+
+    <div class="chat-card" id="chatFeed">
+      <div class="msg-row">
+        <div class="msg-nexa"><strong>Nexa:</strong> Systems nominal, boss. Ready on ESP32 Bluetooth Speaker and laptop mic.</div>
+        <div class="msg-tag">System Ready // Latency Baseline 0 ms</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Side: Synchronized Live Terminal -->
+  <div class="right-pane">
+    <div class="terminal-card">
+      <div class="term-header">
+        <span>LIVE TERMINAL // LOG STREAM</span>
+        <span id="logCounter">0 events</span>
+      </div>
+      <div class="term-body" id="termLogs">[system] Nexa Web Visualizer attached to server :8765
+[db] Connected to PostgreSQL on localhost:5433/nexa
+[ears] Always-on speech spotter active
+[ready] Say "Hey Nexa" or tap the button below to command.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="chips">
+    <button class="chip" onclick="askPreset('Who are you?')">Who are you?</button>
+    <button class="chip" onclick="askPreset('What time is it?')">What time is it?</button>
+    <button class="chip" onclick="askPreset('How is the weather?')">Weather</button>
+    <button class="chip" onclick="askPreset('Tell me a short science joke')">Joke</button>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="promptInput" class="input-box" placeholder="Type a prompt to Nexa (or speak aloud)..." onkeydown="if(event.key==='Enter') sendPrompt()">
+    <button class="btn-mic" id="btnMic" onclick="triggerWake()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      TALK
+    </button>
+  </div>
+</footer>
+
+<script>
+  // Canvas Animated Glowing Orb
+  const canvas = document.getElementById('orbCanvas');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  function resize() {
+    width = canvas.width = canvas.offsetWidth;
+    height = canvas.height = canvas.offsetHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  let phase = 0;
+  let currentMode = 'idle'; // 'idle', 'listening', 'thinking', 'speaking'
+
+  function drawOrb() {
+    ctx.clearRect(0, 0, width, height);
+    const cx = width / 2;
+    const cy = height / 2;
+    phase += 0.03;
+
+    let baseRadius = 80;
+    let waveAmp = 12;
+    let colorGlow = 'rgba(0, 240, 255, 0.5)';
+    let colorCore = 'rgba(0, 240, 255, 0.8)';
+
+    if (currentMode === 'listening') {
+      baseRadius = 95; waveAmp = 25;
+      colorGlow = 'rgba(245, 158, 11, 0.6)';
+      colorCore = 'rgba(245, 158, 11, 0.9)';
+    } else if (currentMode === 'thinking') {
+      baseRadius = 85; waveAmp = 18;
+      colorGlow = 'rgba(168, 85, 247, 0.6)';
+      colorCore = 'rgba(168, 85, 247, 0.9)';
+    } else if (currentMode === 'speaking') {
+      baseRadius = 100; waveAmp = 35;
+      colorGlow = 'rgba(16, 185, 129, 0.7)';
+      colorCore = 'rgba(16, 185, 129, 0.95)';
+    }
+
+    // Outer Glow Circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseRadius * 1.6, 0, Math.PI * 2);
+    ctx.fillStyle = colorGlow.replace(/[\d\.]+\)$/, '0.08)');
+    ctx.fill();
+
+    // Animated Sinusoidal Rings
+    for (let j = 0; j < 3; j++) {
+      ctx.beginPath();
+      for (let i = 0; i <= Math.PI * 2; i += 0.05) {
+        const offset = Math.sin(i * 6 + phase * (j + 1)) * waveAmp * Math.cos(phase + j);
+        const r = baseRadius + offset + (j * 15);
+        const x = cx + Math.cos(i) * r;
+        const y = cy + Math.sin(i) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = colorGlow;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    // Core Solid Glowing Sphere
+    const grad = ctx.createRadialGradient(cx - 20, cy - 20, 10, cx, cy, baseRadius);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.3, colorCore);
+    grad.addColorStop(1, 'rgba(3, 7, 18, 0.9)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, baseRadius * 0.85, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    requestAnimationFrame(drawOrb);
+  }
+  drawOrb();
+
+  function setMode(mode, text) {
+    currentMode = mode;
+    document.getElementById('orbStatusText').innerText = text;
+    const btn = document.getElementById('btnMic');
+    if (mode === 'listening') btn.classList.add('active');
+    else btn.classList.remove('active');
+  }
+
+  // Live Terminal Logger
+  const term = document.getElementById('termLogs');
+  let logCount = 0;
+  function appendLog(line, type = '') {
+    logCount++;
+    document.getElementById('logCounter').innerText = `${logCount} events`;
+    const span = document.createElement('div');
+    span.textContent = line;
+    if (type) span.className = `term-line-${type}`;
+    term.appendChild(span);
+    term.scrollTop = term.scrollHeight;
+  }
+
+  // Polling Server Turns & Latency Logs
+  let lastTurnId = -1;
+  let lastLatCount = 0;
+  let speakingUntil = 0;
+
+  async function poll() {
+    try {
+      const res = await fetch(`/api/turns?after=${lastTurnId}&lat=${lastLatCount}`);
+      if (res.ok) {
+        const data = await res.json();
+        lastTurnId = data.last;
+        lastLatCount = data.lat;
+
+        // Process new conversation turns
+        if (data.turns && data.turns.length > 0) {
+          data.turns.forEach(t => {
+            if (t.role === 'assistant') {
+              const timing = t.timing ? `Whisper: ${t.timing.stt_ms || 0}ms | Thinking: ${t.timing.gemini_ms || 0}ms | Voice: ${t.timing.tts_ms || 0}ms` : `Response in ${t.ms || 0}ms`;
+              addChatMessage(t.heard || 'Prompt', t.text, timing);
+              appendLog(`[turn] heard: "${t.heard}" -> "${t.text}"`, 'info');
+              setMode('speaking', 'Nexa Replying...');
+              speakingUntil = Date.now() + 3500;
+            }
+          });
+        }
+
+        // Process instant local commands
+        if (data.locals && data.locals.length > 0) {
+          data.locals.forEach(l => {
+            appendLog(`[local] instant command: "${l.said}" (${l.timing?.first_audio_ms || 0} ms, instant execution)`, 'time');
+          });
+        }
+
+        // React immediately to hardware / server phase when not speaking
+        if (Date.now() > speakingUntil && data.phase && data.phase_text) {
+          setMode(data.phase, data.phase_text);
+        }
+      }
+    } catch (e) {}
+    setTimeout(poll, 250);
+  }
+  poll();
+
+  // Health Status Polling
+  async function checkHealth() {
+    try {
+      const r = await fetch('/api/health');
+      if (r.ok) {
+        const d = await r.json();
+        if (d.online) {
+          document.getElementById('dbDot').style.background = '#10b981';
+          document.getElementById('modelStatus').innerText = 'Neural Core';
+          document.getElementById('voiceStatus').innerText = (d.voice || 'edge').split(' ')[0];
+          document.getElementById('dbStatus').innerText = `${d.facts || 0} facts`;
+        } else {
+          document.getElementById('dbDot').style.background = '#f59e0b';
+        }
+      }
+    } catch(e) {}
+    setTimeout(checkHealth, 1500);
+  }
+  checkHealth();
+
+  function addChatMessage(user, nexa, timing) {
+    const feed = document.getElementById('chatFeed');
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+      <div class="msg-user">You: ${escapeHtml(user)}</div>
+      <div class="msg-nexa"><strong>Nexa:</strong> ${escapeHtml(nexa)}</div>
+      <div class="msg-tag">${escapeHtml(timing)}</div>
+    `;
+    feed.appendChild(row);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return (str || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  async function triggerWake() {
+    setMode('listening', 'Listening for question...');
+    appendLog('[trigger] Mic activated: listening for your voice prompt...', 'info');
+    try {
+      await fetch('/api/wake', { method: 'POST' });
+    } catch(e) {}
+  }
+
+  async function sendPrompt() {
+    const box = document.getElementById('promptInput');
+    const text = box.value.trim();
+    if (!text) return;
+    box.value = '';
+    setMode('thinking', 'Thinking...');
+    appendLog(`[user] typed prompt: "${text}"`, 'info');
+    try {
+      await fetch('/api/say', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+    } catch(e) {
+      appendLog(`[error] failed to dispatch prompt: ${e}`, 'red');
+    }
+  }
+
+  function askPreset(q) {
+    document.getElementById('promptInput').value = q;
+    sendPrompt();
+  }
+</script>
+</body>
+</html>
