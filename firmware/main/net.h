@@ -1,4 +1,4 @@
-// Wi-Fi, and finding the laptop that runs friday-local.
+// Wi-Fi, and finding the laptop that runs Nexa-local.
 #pragma once
 
 #include <stdbool.h>
@@ -10,7 +10,7 @@
 esp_err_t net_wifi_start(void);
 bool      net_is_online(void);
 
-// Broadcast "I2SONIC?" and wait up to timeout_ms for friday-local to answer
+// Broadcast "I2SONIC?" and wait up to timeout_ms for Nexa-local to answer
 // "I2SONIC!<port>". On success fills in the laptop's IP and HTTP port.
 esp_err_t net_find_laptop(int timeout_ms, char *ip, size_t ip_len, int *port);
 

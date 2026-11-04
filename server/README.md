@@ -1,6 +1,6 @@
-# friday-local: Friday's brain on your laptop
+# Nexa-local: Nexa's brain on your laptop
 
-> In the Friday repo this is the `server/` folder.
+> In the Nexa repo this is the `server/` folder.
 
 The laptop hears (faster-whisper), remembers (PostgreSQL), speaks (an Irish neural
 voice online, or Piper / the Windows voice offline) and asks **Gemini** to think. It speaks the same protocol as the
@@ -8,17 +8,17 @@ Cloudflare Worker, so the S3 uses whichever one is available: the laptop when it
 on, the Worker when it's not.
 
 ```
-S3 --(Wi-Fi, HTTP)--> friday-local --> faster-whisper   (hearing, on the laptop)
+S3 --(Wi-Fi, HTTP)--> Nexa-local --> faster-whisper   (hearing, on the laptop)
                                    --> PostgreSQL       (memory, on the laptop)
                                    --> Gemini API       (thinking, web search)
                                    --> Piper / Windows  (voice, on the laptop)
 ```
 
-## What Friday can do now
+## What Nexa can do now
 
 | Say | What happens |
 |---|---|
-| "Hey Jarvis" (near the laptop), then your question | The laptop's mic hears the wake word, records until you stop and the speaker answers ([the laptop's ears](#the-laptops-ears-wake-word)) |
+| "Hey Nexa" (near the laptop), then your question | The laptop's mic hears the wake word, records until you stop and the speaker answers ([the laptop's ears](#the-laptops-ears-wake-word)) |
 | "Remember that the spare key is in the kitchen drawer" | Saved to memory (`save_memory`) |
 | "Where's the spare key?" | Answered from memory: related memories are put in her prompt automatically |
 | "What did I tell you about my car?" | Searches memories and past conversations (`recall_memory`) |
@@ -40,8 +40,8 @@ That never slows a reply down. Set `AUTO_MEMORY=0` to keep only what you ask her
 
 ## 1. PostgreSQL (already running in Docker)
 
-Your database runs in Docker from the repo's `db/` folder (`pgvector/pgvector:pg17`, user `friday`,
-database `friday`, port 5432; the password is `FRIDAY_DB_PASSWORD` in `db\.env`). Make sure it's up before starting friday-local:
+Your database runs in Docker from the repo's `db/` folder (`pgvector/pgvector:pg17`, user `Nexa`,
+database `Nexa`, port 5432; the password is `Nexa_DB_PASSWORD` in `db\.env`). Make sure it's up before starting Nexa-local:
 
 ```
 cd db
@@ -49,14 +49,14 @@ docker compose up -d
 docker compose ps
 ```
 
-`friday-pg` should say **running** (if not: `docker compose start`, or just open Docker Desktop).
+`Nexa-pg` should say **running** (if not: `docker compose start`, or just open Docker Desktop).
 
-You don't need to load any schema: friday-local creates its own tables (`profile`, `facts`,
+You don't need to load any schema: Nexa-local creates its own tables (`profile`, `facts`,
 `episodes`, `turns`, `items`, `music_tracks`, `settings`) the first time it starts.
 **Don't also load the old Supabase schema into this database**: it uses the same table names
 with different columns, and the two would clash.
 
-## 2. Set up friday-local (once)
+## 2. Set up Nexa-local (once)
 
 Create a virtual environment (or reuse one that already has faster-whisper):
 
@@ -75,13 +75,13 @@ In `.env`, fill in the first three lines:
 |---|---|
 | `GEMINI_API_KEY` | Same key as your Worker |
 | `DEVICE_TOKEN` | Copy from `DEVICE_TOKEN` in the firmware's `main\secrets.h` |
-| `DATABASE_URL` | Replace `YOUR_DB_PASSWORD` with `FRIDAY_DB_PASSWORD` from `db\.env` |
+| `DATABASE_URL` | Replace `YOUR_DB_PASSWORD` with `Nexa_DB_PASSWORD` from `db\.env` |
 
 **Allow it through Windows Firewall.** Open a terminal **as Administrator** and run:
 
 ```
-netsh advfirewall firewall add rule name="FRIDAY http" dir=in action=allow protocol=TCP localport=8765 profile=private
-netsh advfirewall firewall add rule name="FRIDAY discovery" dir=in action=allow protocol=UDP localport=5006 profile=private
+netsh advfirewall firewall add rule name="Nexa http" dir=in action=allow protocol=TCP localport=8765 profile=private
+netsh advfirewall firewall add rule name="Nexa discovery" dir=in action=allow protocol=UDP localport=5006 profile=private
 ```
 
 These rules only apply on networks Windows treats as **Private**. A phone hotspot often
@@ -104,13 +104,13 @@ python server.py
 ```
 
 You'll see `[memory] PostgreSQL ready`, `[tts] using ...`, `[stt] ready` and
-`[friday] listening on port 8765`. Leave it running and power the S3: it prints
+`[Nexa] listening on port 8765`. Leave it running and power the S3: it prints
 `[brain] found the laptop`. Every question then shows up here with timings:
 
 ```
 [tool] save_memory({"fact": "The spare key is in the kitchen drawer."}) -> saved memory 3: ...
 [turn] heard "Remember the spare key is in the kitchen drawer" | Whisper 640 ms | Gemini 1100 ms (tools: save_memory) | voice 280 ms
-friday> Got it, boss. The spare key is in the kitchen drawer.
+Nexa> Got it, boss. The spare key is in the kitchen drawer.
 [memory] learned: saved memory 4: The user goes to the gym at 6 am.
 ```
 
@@ -119,13 +119,13 @@ To test from the laptop as if you were the S3: `python client.py --say "hello"` 
 
 ## The laptop's ears (wake word)
 
-Until the speaker has a good microphone, the **laptop's own mic** listens. Say **"Hey Jarvis"**, then your
+Until the speaker has a good microphone, the **laptop's own mic** listens. Say **"Hey Nexa"**, then your
 question in the same breath or after the chime; when you stop talking, the speaker answers. Only that phrase
 wakes her: other speech, music and noise score close to zero.
 
 ```
-laptop mic ─80 ms─▶ wake word ──"hey jarvis"──▶ record until you stop ──▶ Whisper ─▶ local command or Gemini ─▶ speaker
-              openWakeWord, always on            Silero speech detector
+laptop mic ─80 ms─▶ wake word ──"hey nexa"──▶ record until you stop ──▶ Whisper ─▶ local command or Gemini ─▶ speaker
+              ears engine, always on            Silero speech detector
 ```
 
 Nothing is recorded or sent anywhere before the wake word: each 80 ms of sound is scored and thrown away.
@@ -137,39 +137,35 @@ you and not the song.
 the wake word is switched off, then stays off another `WAKE_COOLDOWN_S` for the echo. You can't interrupt her
 by voice yet; BOOT works.
 
-**Setup:** `pip install -r requirements.txt` (adds `sounddevice` and `openwakeword`). The first start downloads
-the wake word model from openWakeWord's GitHub (about 5 MB). You'll see
-`[ears] listening for "hey jarvis" on Microphone (Realtek...)`.
+**Setup:** `pip install -r requirements.txt`. You'll see
+`[ears] listening for "hey nexa" on Microphone (Realtek...)`.
 
 **Check it without the speaker:**
 
 ```
 python -m ears.mic                  which microphones there are, and a 5 s level meter (talk!)
-python client.py --listen           be the speaker: say "hey jarvis, what's the time" and it prints the answer
+python client.py --listen           be the speaker: say "hey nexa, what's the time" and it prints the answer
 ```
 
 | Setting | Default | Does |
 |---|---|---|
 | `EARS` | `1` | `0` = no laptop mic (BOOT push-to-talk on the S3 only) |
 | `MIC_DEVICE` | blank | The Windows default mic, or a number / part of a name from `python -m ears.mic` |
-| `WAKE_MODEL` | `hey_jarvis` | A built-in phrase (`hey_jarvis`, `alexa`, `hey_mycroft`) or your own model's path, e.g. `models/hey_friday.onnx` |
+| `WAKE_MODEL` | `hey_nexa` | The wake phrase (`hey_nexa`) or a path to your custom model |
 | `WAKE_THRESHOLD` | `0.6` | 0..1. Raise it if she wakes up when nobody called her, lower it if she misses you |
 | `WAKE_DEBUG` | `0` | `1` prints each near-miss (`[ears] near miss: 0.43`), which is how you pick a threshold for your room |
 | `WAKE_COOLDOWN_S` | `0.8` | Deaf this long after the speaker has finished a reply |
 | `EARS_START_S` / `EARS_SILENCE_MS` / `EARS_MAX_S` | `5` / `800` / `12` | After the wake word: how long you have to start, how much silence ends the question, the longest question |
 
-**Your own "Hey Friday".** "Hey Jarvis" is built in so everything works today. A custom phrase is a small
-model trained on synthetic speech (an hour or two, e.g. with [livekit-wakeword](https://pypi.org/project/livekit-wakeword/),
-which exports openWakeWord-compatible ONNX). Put the `.onnx` in `server/models/` and set
-`WAKE_MODEL=models/hey_friday.onnx`; nothing else changes. Use two words ("hey friday"), not "friday" alone:
-a single word false-triggers in normal conversation ("it's Friday").
+**Your own "Hey Nexa".** Nexa uses its native keyword recognizer or custom models from `server/models/`. Set
+`WAKE_MODEL=models/hey_nexa.onnx` if using a trained ONNX file.
 
 When the INMP441 arrives, the same job moves onto the S3 (ESP-SR WakeNet); the rest of this pipeline stays.
 
 ## The laptop as the speaker (Bluetooth board, button only)
 
-The S3 is gone: the ESP32 DevKit is now a plain **Bluetooth speaker** (`friday_speaker/friday_speaker.ino`).
-It has no mic, so the laptop's mic listens, and the wake word is **off** (`WAKE_ENABLED=0` is the default): Friday
+The S3 is gone: the ESP32 DevKit is now a plain **Bluetooth speaker** (`Nexa_speaker/Nexa_speaker.ino`).
+It has no mic, so the laptop's mic listens, and the wake word is **off** (`WAKE_ENABLED=0` is the default): Nexa
 listens only after you press **BOOT** on the board. `speaker.py` plays the voice and the music on the laptop's
 sound output, which Windows sends to the board.
 
@@ -178,8 +174,8 @@ python server.py        # terminal 1: the brain (unchanged)
 python speaker.py       # terminal 2: the button, her voice and your music
 ```
 
-1. Flash `friday_speaker/friday_speaker.ino`, then pair **Friday** in Windows (Bluetooth & devices).
-2. Set Windows' sound output to Friday, or pin it: `python speaker.py --out Friday` (`--list-devices` lists them).
+1. Flash `Nexa_speaker/Nexa_speaker.ino`, then pair **Nexa** in Windows (Bluetooth & devices).
+2. Set Windows' sound output to Nexa, or pin it: `python speaker.py --out Nexa` (`--list-devices` lists them).
 3. Plug the board's USB cable in (BOOT is read over its serial port), close the Arduino Serial Monitor, and run
    `pip install -r requirements.txt` once (adds `pyserial`).
 4. Press BOOT, wait for the chime, talk. Pressing it while she talks cuts her off and listens again. **Enter** in
@@ -220,7 +216,7 @@ except "what's playing" and the time, at most `INTENT_MAX_WORDS` words, and a cl
 command. A song the library can't find goes to Gemini, which can work out what you meant.
 
 ```
-python intents.py "turn it down a bit"      what Friday would do, and the model's score for each command
+python intents.py "turn it down a bit"      what Nexa would do, and the model's score for each command
 ```
 
 These turns aren't saved to her conversation history or memory (there's nothing to remember in "pause"), and
@@ -236,8 +232,8 @@ the console shows them as `local pause (phrase) 0 ms, no Gemini`.
 
 ## Looking at and editing memory
 
-Open **Adminer** at <http://localhost:8080> (System PostgreSQL, Server `db`, Username `friday`,
-your password, Database `friday`). Click a table → **Select data** to browse, **edit** on a row to change
+Open **Adminer** at <http://localhost:8080> (System PostgreSQL, Server `db`, Username `Nexa`,
+your password, Database `Nexa`). Click a table → **Select data** to browse, **edit** on a row to change
 it, **New item** to add one. Changes apply on the next question, no restart.
 
 | Table | What's in it |
@@ -255,7 +251,7 @@ it, **New item** to add one. Changes apply on the next question, no restart.
 | Setting | Does |
 |---|---|
 | `GEMINI_MODEL` | Default `gemini-3.5-flash-lite`, the same model as the Worker |
-| `WEB_SEARCH` / `SEARCH_PROVIDER` | Live web search. `auto` (default) tries Google Search grounding first; on a key without billing Google refuses, and Friday uses **DuckDuckGo** instead (free, no key) for the next hour. `duckduckgo` skips Google entirely. `SEARCH_REGION=in-en` gives Indian results |
+| `WEB_SEARCH` / `SEARCH_PROVIDER` | Live web search. `auto` (default) tries Google Search grounding first; on a key without billing Google refuses, and Nexa uses **DuckDuckGo** instead (free, no key) for the next hour. `duckduckgo` skips Google entirely. `SEARCH_REGION=in-en` gives Indian results |
 | `AUTO_MEMORY` | `1` = learn facts by herself after each reply (one small extra Gemini call, in the background) |
 | `HISTORY_TURNS` / `SESSION_GAP_MIN` | How much recent conversation she keeps word for word, and how long a silence starts a new one |
 | `WHISPER_MODEL` | `base` is fast; `small` hears a noisy mic better but is ~3x slower on CPU |
@@ -266,7 +262,7 @@ it, **New item** to add one. Changes apply on the next question, no restart.
 
 ## Music
 
-Friday plays songs from your own folder (`MUSIC_DIR`, now `D:\songs`). The laptop keeps the
+Nexa plays songs from your own folder (`MUSIC_DIR`, now `D:\songs`). The laptop keeps the
 library and the queue; the speaker streams one song at a time and mixes it under her voice
 (quieter while you talk to her, back up after).
 
@@ -283,7 +279,7 @@ song up on Apple's iTunes Search API (free, ~20 lookups a minute), then converts
 once into `music_cache\` (16 kHz mono, the speaker's format; about 2 MB per song). Later
 scans only touch new or changed files, and a renamed file keeps its metadata.
 
-**New songs:** drop them in the folder. Friday checks every `MUSIC_SCAN_MIN` minutes (30 by
+**New songs:** drop them in the folder. Nexa checks every `MUSIC_SCAN_MIN` minutes (30 by
 default), or say "I added some songs". `python music.py list --review` shows matches worth a look.
 
 | Setting | Does |
@@ -298,18 +294,18 @@ Check it without the speaker: `python server.py --test "play kesariya" --music` 
 `[action]` the speaker would get, and `python client.py --song 12` downloads song 12 exactly as
 the speaker receives it (`song.mp3`).
 
-Music needs the laptop: when the S3 falls back to the Cloudflare Worker, Friday says she
+Music needs the laptop: when the S3 falls back to the Cloudflare Worker, Nexa says she
 can't play music right now.
 
 ## Your documents (Cortex)
 
-Friday can answer from your own PDFs, Word and text files, and says where the answer came from
+Nexa can answer from your own PDFs, Word and text files, and says where the answer came from
 ("your biology notes, page three, say..."). The design and the numbers behind it are in
 [`docs/cortex.md`](../docs/cortex.md).
 
 ```
 UPLOAD (any browser)                                    ASK (this laptop)
-Cortex upload page (Vercel) ── file ──▶ Supabase        question ─▶ friday-local
+Cortex upload page (Vercel) ── file ──▶ Supabase        question ─▶ Nexa-local
    parse ▸ chunk ▸ Gemini embeddings ──▶ cortex.chunks       │  about your documents? (a local check, microseconds)
                                           ▲                   ├─ yes: embed the question + cortex.search() ─▶ passages
                                           └─ one SQL call ────┤       in the prompt ─▶ Gemini answers in ONE round
@@ -317,21 +313,21 @@ Cortex upload page (Vercel) ── file ──▶ Supabase        question ─�
 ```
 
 **Uploading** happens on the hosted Cortex page (password protected), not here. A document can be asked about
-once the page shows it as *ready*; Friday re-reads the list every `CORTEX_LIST_S` seconds (60).
+once the page shows it as *ready*; Nexa re-reads the list every `CORTEX_LIST_S` seconds (60).
 
-**Connecting Friday** (once): in Supabase open *Connect*, copy the **Session pooler** string (port 5432, not the
+**Connecting Nexa** (once): in Supabase open *Connect*, copy the **Session pooler** string (port 5432, not the
 transaction pooler on 6543), put the database password in it and set it in `.env`:
 
 ```
 CORTEX_DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
 ```
 
-TLS (`sslmode=require`) is added for you. At start-up friday-local connects in the background (it never delays
+TLS (`sslmode=require`) is added for you. At start-up Nexa-local connects in the background (it never delays
 start-up) and prints `[cortex] 3 document(s) ready` and `[cortex] ready in ... ms`. `/health` shows
 `"documents": 3`, or `"off"` / `"connecting"` / `"unreachable"`. Leave the setting empty and Cortex is off: no
-connection, no extra prompt text, Friday works exactly as before.
+connection, no extra prompt text, Nexa works exactly as before.
 
-**How Friday decides.** Each question first goes through a quick local check: phrases like *my notes*, *the
+**How Nexa decides.** Each question first goes through a quick local check: phrases like *my notes*, *the
 manual*, *the pdf*, *according to my notes*, *what does the manual say*, or a distinctive word from one of your
 documents' names or subjects used as a reference ("the router", "in biology" for `Router_Manual.txt` and
 `biology-notes.pdf`). "How do routers work" or "what does the fox say" don't count: those go the tool way.
@@ -396,7 +392,7 @@ documents (the check said so, or Gemini called the tool), and a tool search cost
 The `[latency]` line and `latency.log` say how long each question waited for the documents (`rag_mode`, `rag_ms`,
 `embed_ms`, `search_ms`).
 
-**Privacy.** Your documents live in your Supabase project (Mumbai), not on this laptop. Friday reads them with the
+**Privacy.** Your documents live in your Supabase project (Mumbai), not on this laptop. Nexa reads them with the
 database password in `.env`; the browser never sees a Supabase key. The few passages that match a question go to
 Gemini with that question, like your memories do. With `CORTEX_PREFETCH=1` (the default) and documents uploaded,
 almost every question of three or more words also goes to Gemini's embedding API; with `CORTEX_PREFETCH=0` only
@@ -407,11 +403,11 @@ can't break out of the passage markers it is given to Gemini in.
 
 | Problem | Fix |
 |---|---|
-| `[cortex] can't reach postgresql://...` at start-up | Wrong password, or the transaction pooler (6543) instead of the session pooler (5432), or the Supabase project is paused (free projects pause after a week unused: open the dashboard to wake it). Friday keeps trying every 10 s |
+| `[cortex] can't reach postgresql://...` at start-up | Wrong password, or the transaction pooler (6543) instead of the session pooler (5432), or the Supabase project is paused (free projects pause after a week unused: open the dashboard to wake it). Nexa keeps trying every 10 s |
 | `"documents": 0` | Nothing is *ready* yet: check the upload page; documents still processing aren't searched |
 | She says she can't find something that's there | Lower `CORTEX_MIN_SIMILARITY` (try 0.4), or ask with "my notes" / the document's name so the check catches it |
 | `[cortex] no passages within 2.5 s` | The network to Google or Mumbai is slow; raise `CORTEX_TIMEOUT` a little |
-| `[cortex] search-3 didn't answer in time: cancelled, closed and replaced` | A database call hung (a network that drops traffic). Friday has already replaced the connection; if it keeps happening, `/health` will show `"unreachable"` until the line recovers |
+| `[cortex] search-3 didn't answer in time: cancelled, closed and replaced` | A database call hung (a network that drops traffic). Nexa has already replaced the connection; if it keeps happening, `/health` will show `"unreachable"` until the line recovers |
 | `[cortex] embedding failed: gemini rate limit hit` | Too many questions for the free embedding quota: set `CORTEX_PREFETCH=0` so only document questions are embedded |
 
 ## Speed
@@ -428,7 +424,7 @@ The S3's `[time]` line adds the upload and the speaker's buffer on top.
 
 | Setting | Effect |
 |---|---|
-| `GEMINI_REASONING=low` | Gemini thinks briefly before answering (Gemini 3 can't skip thinking entirely). `medium` or `high` for harder questions, at a cost in speed. If the model refuses the setting, Friday notices and uses Google's default |
+| `GEMINI_REASONING=low` | Gemini thinks briefly before answering (Gemini 3 can't skip thinking entirely). `medium` or `high` for harder questions, at a cost in speed. If the model refuses the setting, Nexa notices and uses Google's default |
 | `MEMORY_ALL_FACTS_MAX=40` | While she knows fewer than 40 things about you, they all go in her prompt and no memory search runs (that search cost a trip to Google on every question) |
 | `TTS_CACHE_MAX=500` | Short lines she says often ("Paused.", "Volume 50 percent.") are kept as audio in `voice_cache\`, so they play at once instead of waiting 1–3 s for Microsoft. The common ones are made in the background when the server starts |
 | `FAST_MUSIC_REPLIES=1` | "Pause", "next song", "play X" are answered by the laptop ("Here's Kesariya.") instead of a second Gemini call |
@@ -439,7 +435,7 @@ and memories and the music library are kept in RAM.
 
 ## Making replies faster
 
-Friday no longer waits for Gemini to finish the whole reply before she starts talking. The answer is
+Nexa no longer waits for Gemini to finish the whole reply before she starts talking. The answer is
 cut into sentences as it arrives, the first one is spoken while the rest is still being written, and the
 voice makes the next ones in the background so there's no gap. This works for spoken questions (`/ask`)
 and typed ones (`/say`). [`docs/latency.md`](../docs/latency.md) has the measurements behind it and the
@@ -454,7 +450,7 @@ ideas that were left out on purpose.
 | `STREAM_MAX_FAILS` | `3` | After this many turns in a row where streaming broke before sending anything, it switches itself off until the server restarts. Those turns were answered the old way |
 | `GEMINI_HEDGE_S` | `3` | No first word from Gemini after this many seconds: ask again on a fresh connection and use whichever answers first. `0` = never |
 | `GEMINI_KEEPALIVE_S` | `40` | A tiny request to Google when the line has been quiet this long, so its connection doesn't go stale. `0` = off |
-| `WEATHER_CACHE_S`, `WEATHER_PREFETCH`, `WEATHER_TIMEOUT` | `600`, `1`, `4` | A weather lookup is reused for 10 minutes, your profile's city is refreshed in the background, and Open-Meteo gets 4 s before Friday gives up on it |
+| `WEATHER_CACHE_S`, `WEATHER_PREFETCH`, `WEATHER_TIMEOUT` | `600`, `1`, `4` | A weather lookup is reused for 10 minutes, your profile's city is refreshed in the background, and Open-Meteo gets 4 s before Nexa gives up on it |
 | `STT_WARMUP` | `1` | Runs Whisper once on a second of noise when the server starts, so the first question isn't the slow one |
 
 `STREAM_REPLIES=0` brings back the old behaviour exactly. The server also falls back to it by itself for a
@@ -495,7 +491,7 @@ is renamed to `latency.<date>.log` and a new one is started.)
 | `quick` | 1 = a music command answered by the laptop without a second Gemini call |
 | `stream` | 1 = the reply was streamed. Then, for a plain reply (no filler, no tool call), `first_audio_ms` is about `stt_ms` + `first_sentence_ms` + `tts_ms`; the console line shows any wait for the hold as "held back". `gemini_ms` is all of Gemini's writing, which carries on after that |
 | `first_sentence_ms`, `ttft_ms` | Streamed only: Gemini's time to the first full sentence, and to its first word |
-| `hedged` | Streamed only: 1 = the first word took so long that Friday asked again |
+| `hedged` | Streamed only: 1 = the first word took so long that Nexa asked again |
 | `filler` | Streamed only: 1 = a filler line was spoken while a tool ran |
 | `answer_ms` | Streamed only: when the answer itself started to sound: the first audio of the last round that was heard, so not the filler and not something said before a tool call |
 | `rag_mode` | How the documents were used: `inject` (passages in the prompt, waited for before Gemini), `prefetch` (the tool answered from the background search), `tool` (the tool searched when asked); empty = not used |
@@ -517,9 +513,9 @@ documents). Passwords, PINs and card numbers are refused.
 |---|---|
 | `[ears] off: openwakeword isn't installed` (or `sounddevice`) | `pip install -r requirements.txt` in the server's venv |
 | `[ears] off: no microphone found` / `the mic has gone quiet` | Windows Settings → Privacy → Microphone: allow desktop apps. Check with `python -m ears.mic` |
-| `[ears] heard "hey jarvis" ..., but the speaker isn't connected` | The S3's firmware needs `LAPTOP_MIC 1`, or test with `python client.py --listen` |
+| `[ears] heard "hey nexa" ..., but the speaker isn't connected` | The S3's firmware needs `LAPTOP_MIC 1`, or test with `python client.py --listen` |
 | She wakes up when nobody called her | Raise `WAKE_THRESHOLD` (0.7); keep the laptop away from the TV |
-| She doesn't hear "hey jarvis" | `WAKE_DEBUG=1` shows how close you got; lower `WAKE_THRESHOLD` a little, or speak towards the laptop |
+| She doesn't hear "hey nexa" | `WAKE_DEBUG=1` shows how close you got; lower `WAKE_THRESHOLD` a little, or speak towards the laptop |
 | She cuts you off mid-sentence | Raise `EARS_SILENCE_MS` (1200) |
 | A command went to Gemini | `python intents.py "what you said"` shows why. Add the wording to `EXAMPLES` in `intents.py`, or lower `INTENT_MIN_SIMILARITY` a little |
 | `[local] command model off (...)` | No internet for the first download, or Hugging Face blocked: exact phrases still work |
@@ -533,7 +529,7 @@ documents). Passwords, PINs and card numbers are refused.
 | The S3 never finds the laptop | Firewall rules above, network set to Private, same Wi-Fi. Check with `python client.py --find` from another PC |
 | First answer slow | Whisper loads and warms up on start (`STT_WARMUP`), and the first Gemini call opens its connection: wait for `[stt] warmed up` and `[gemini] connection ready` |
 | `[stream] broke before sending anything (...)` | Streaming failed before any sound went out, so that question was answered the old way. The text in brackets is the reason. After `STREAM_MAX_FAILS` in a row it stays off until the restart; `STREAM_REPLIES=0` turns it off for good |
-| `[gemini] nothing after 3 s; asking again on a fresh connection` | Normal now and then: Gemini was slow to start, so Friday asked a second time and used whichever answered first. If it's every question, run `python tools/diag_network.py` |
+| `[gemini] nothing after 3 s; asking again on a fresh connection` | Normal now and then: Gemini was slow to start, so Nexa asked a second time and used whichever answered first. If it's every question, run `python tools/diag_network.py` |
 | `[tts] stopped mid-reply: ...` | The voice failed after she had started speaking, so the reply ends where it stopped. The reason follows the colon (usually the internet) |
 | `[music] 0 songs in the library` | Run `python music.py scan` |
 | `ffmpeg not found` at start-up | `winget install Gyan.FFmpeg`, open a new terminal; or set `FFMPEG=C:\path\to\ffmpeg.exe` in `.env`. Without it MP3s still play, M4As don't |

@@ -178,7 +178,7 @@ class PttTest(unittest.TestCase):
         self.assertEqual(ptt.parse_line("PTT 1"), "down")
         self.assertEqual(ptt.parse_line("PTT 0\r\n"), "up")
         self.assertEqual(ptt.parse_line("\x00\xffPTT 1"), "down")      # a stray byte after a reset
-        for junk in ("", "Play", "Device connected", "PTT", "PTT 2", "PTT x", "friday PTT?"):
+        for junk in ("", "Play", "Device connected", "PTT", "PTT 2", "PTT x", "Nexa PTT?"):
             self.assertIsNone(ptt.parse_line(junk), junk)
 
     def test_named_port_is_used_as_given(self):
@@ -219,7 +219,7 @@ class NoWakeTest(unittest.TestCase):
 # ---- the whole speaker against a fake server
 
 
-class FakeFriday(http.server.ThreadingHTTPServer):
+class FakeNexa(http.server.ThreadingHTTPServer):
     daemon_threads = True
 
     def __init__(self):
@@ -347,7 +347,7 @@ class SpeakerTest(unittest.TestCase):
         p = mock.patch("builtins.print")
         p.start()
         self.addCleanup(p.stop)
-        self.srv = FakeFriday()
+        self.srv = FakeNexa()
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.addCleanup(self.srv.server_close)
         self.addCleanup(self.srv.shutdown)

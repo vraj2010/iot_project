@@ -29,7 +29,7 @@ _WORD = re.compile(r"[a-z0-9']+")
 _STOP = set("""a an the is are was were be been am i me my mine you your yours it its this that
 these those to of in on at for with and or but not no do does did have has had what when where
 who whom which how why can could would should will shall may might about tell said say please
-nexa friday hey ok okay so just than then there here from by as into""".split())
+nexa Nexa hey ok okay so just than then there here from by as into""".split())
 
 
 def _words(text: str) -> set[str]:

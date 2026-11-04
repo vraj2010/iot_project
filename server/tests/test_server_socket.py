@@ -36,9 +36,9 @@ class SpeakerSockets(unittest.TestCase):
         self.assertTrue(Probe.seen[0], "TCP_NODELAY is off on the connection to the speaker")
 
 
-class OneFridayAtATime(unittest.TestCase):
+class OneNexaAtATime(unittest.TestCase):
     """On Windows, SO_REUSEADDR let a second server.py bind port 8765 as well, silently: the speaker then
-    kept talking to an old copy of Friday (one started before an update) while the new one sat idle."""
+    kept talking to an old copy of Nexa (one started before an update) while the new one sat idle."""
 
     def test_a_second_server_on_the_same_port_fails_loudly(self):
         first = server.Server(("127.0.0.1", 0), server.Handler)

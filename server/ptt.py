@@ -1,6 +1,6 @@
 """The board's BOOT button, read over its USB cable.
 
-friday_speaker.ino prints "PTT 1" to the serial port when BOOT goes down and "PTT 0" when it comes up.
+Nexa_speaker.ino prints "PTT 1" to the serial port when BOOT goes down and "PTT 0" when it comes up.
 speaker.py reads those lines here and tells the server to listen. Close the Arduino Serial Monitor first:
 only one program can hold a COM port.
 

@@ -1,4 +1,4 @@
-"""GET /listen and POST /listen/wake (the laptop as Friday's ears), and commands answered without Gemini."""
+"""GET /listen and POST /listen/wake (the laptop as Nexa's ears), and commands answered without Gemini."""
 
 import contextlib
 import datetime
@@ -197,7 +197,7 @@ class WholeLoop(ListenBase):
 
     def test_wake_word_to_spoken_answer(self):
         class Script:
-            value, phrase = 0.0, "hey jarvis"
+            value, phrase = 0.0, "hey nexa"
 
             def score(self, frame):
                 return self.value
@@ -221,7 +221,7 @@ class WholeLoop(ListenBase):
         t.start()
         self.assertTrue(wait_until(lambda: ears.polling == 1))
         with mock.patch("builtins.print"):
-            feed(1, w=0.9)                                         # "hey jarvis"
+            feed(1, w=0.9)                                         # "hey nexa"
             t.join(5)
             status, body = idle[0]
             self.assertEqual(status, 202)

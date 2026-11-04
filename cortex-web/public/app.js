@@ -300,7 +300,7 @@ async function resume(d) {
 }
 
 async function removeDoc(d) {
-  if (!confirm(`Delete "${d.filename}"? Friday will no longer find it.`)) return;
+  if (!confirm(`Delete "${d.filename}"? Nexa will no longer find it.`)) return;
   try {
     const r = await api(`/api/documents/${d.id}`, { method: "DELETE" });
     toast(r.storage_deleted ? "Deleted." : "Deleted (the stored file could not be removed).");
@@ -386,7 +386,7 @@ async function refreshAnswers() {
     const list = $("answers");
     const rows = data.answers || [];
     list.replaceChildren(...(rows.length ? rows.map(answerView)
-      : [el("li", { class: "empty", text: "No document answers yet. Ask Friday about your notes." })]));
+      : [el("li", { class: "empty", text: "No document answers yet. Ask Nexa about your notes." })]));
     $("ansUpdated").textContent = "updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   } catch (err) { if (err.status !== 401) $("ansUpdated").textContent = err.message; }
 }

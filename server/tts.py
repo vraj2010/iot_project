@@ -336,7 +336,7 @@ class _Local:
 
 
 # ---------------------------------------------------------------- voice cache
-# Short lines Friday says often ("Paused.", "Volume 50 percent.") are kept as MP3
+# Short lines Nexa says often ("Paused.", "Volume 50 percent.") are kept as MP3
 # files, so they play instantly instead of waiting 1-3 s for Microsoft.
 
 _CACHE_CHARS = 80

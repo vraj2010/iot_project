@@ -1,12 +1,12 @@
 // ============================================================
-//  I2Sonic assistant "Friday"  —  ESP32-S3   (Phase 6: music)
+//  I2Sonic assistant "Nexa"  —  ESP32-S3   (Phase 6: music)
 //
 //  Say the wake word near the laptop (LAPTOP_MIC 1: the laptop's mic
 //  listens), hold BOOT and speak, or type a question in the serial
-//  monitor. The S3 sends it to friday-local on your laptop, which hears it
+//  monitor. The S3 sends it to Nexa-local on your laptop, which hears it
 //  (faster-whisper), answers with Gemini using its memory and tools
 //  (PostgreSQL, web search, your music library) and speaks the answer.
-//  Songs stream from the laptop and play under Friday's voice.
+//  Songs stream from the laptop and play under Nexa's voice.
 //  If the laptop is off, the same request goes to the Cloudflare Worker.
 //
 //  Edge:  record, clean up, mix and play, HTTP client, offline SAM voice
@@ -151,7 +151,7 @@ static void on_cloud_text(const char *reply)
     strncpy(s_reply, reply, sizeof(s_reply) - 1);
     s_reply[sizeof(s_reply) - 1] = '\0';
     if (reply[0] != '\0') {
-        printf("friday> %s\n", reply);
+        printf("Nexa> %s\n", reply);
         fflush(stdout);
     }
 }
@@ -181,7 +181,7 @@ static void print_failure(int http_status, const char *why, bool chime)
         printf("[failed] HTTP %d: %s\n", http_status, why);
     }
     if (http_status == 401) {
-        printf("         DEVICE_TOKEN in secrets.h doesn't match the server's (friday-local .env / Worker secret)\n");
+        printf("         DEVICE_TOKEN in secrets.h doesn't match the server's (Nexa-local .env / Worker secret)\n");
     } else if (http_status == 429) {
         printf("         free-tier limit hit; wait a minute and try again\n");
     }
@@ -258,7 +258,7 @@ static void ask_text_only(const char *question)
 
     esp_err_t err = cloud_chat(question, answer, sizeof(answer), &r);
     if (err == ESP_OK) {
-        printf("friday> %s\n", answer);
+        printf("Nexa> %s\n", answer);
         printf("[time] %s | %d ms total, %d ms on the server\n", cloud_brain_name(r.brain), r.total_ms, r.worker_ms);
         audio_chime_done();
     } else {
@@ -337,7 +337,7 @@ static void laptop_turn(int wake_id)
 
 static void ears_task(void *arg)
 {
-    printf("[friday] say the wake word near the laptop, press BOOT, or type a question\n");
+    printf("[Nexa] say the wake word near the laptop, press BOOT, or type a question\n");
     for (;;) {
         xSemaphoreTake(s_turn, portMAX_DELAY);     // wait for any turn (and its reply) to finish
         xSemaphoreGive(s_turn);
@@ -361,7 +361,7 @@ static bool laptop_press(void)
         return true;                               // ears_task gets the wake and does the rest
     }
     if (status == 409) {
-        printf("\n[busy] Friday is still answering; ask again when she's done\n");
+        printf("\n[busy] Nexa is still answering; ask again when she's done\n");
         return true;
     }
     if (status == 0) {
@@ -390,7 +390,7 @@ static void assistant_task(void *arg)
     bool typed = false;               // a typed line is waiting for its turn
 
     if (!LAPTOP_MIC) {                // with the laptop's mic, ears_task says how to talk to her
-        printf("[friday] hold BOOT and speak, or type a question and press Enter\n");
+        printf("[Nexa] hold BOOT and speak, or type a question and press Enter\n");
     }
     prompt();
 
@@ -431,12 +431,12 @@ void app_main(void)
 {
     textin_init();
 
-    printf("\n=== I2Sonic: Friday (Phase 6, music) ===\n");
+    printf("\n=== I2Sonic: Nexa (Phase 6, music) ===\n");
     printf("mic     : %s\n", MIC_TYPE == MIC_MAX4466 ? "MAX4466 (analog)" : "INMP441 (I2S)");
     printf("speaker : MAX98357A  BCLK %d  LRC %d  DIN %d  SD %d\n",
            AMP_BCLK_GPIO, AMP_LRC_GPIO, AMP_DIN_GPIO, AMP_SD_GPIO);
     if (USE_LAPTOP) {
-        printf("brain   : laptop (friday-local, found automatically)%s\n",
+        printf("brain   : laptop (Nexa-local, found automatically)%s\n",
                USE_WORKER_FALLBACK ? ", Worker as backup" : "");
     }
     if (USE_WORKER_FALLBACK || !USE_LAPTOP) {
@@ -484,7 +484,7 @@ void app_main(void)
 
     // 32 KB stack: TLS needs ~8 KB and the MP3 decoder keeps ~16 KB of
     // scratch on the stack for each frame.
-    xTaskCreate(assistant_task, "friday", 32768, NULL, 5, NULL);
+    xTaskCreate(assistant_task, "Nexa", 32768, NULL, 5, NULL);
     if (LAPTOP_MIC) {
         s_wake_q = xQueueCreate(1, sizeof(int));
         if (s_wake_q) {
@@ -508,7 +508,7 @@ void app_main(void)
                     xSemaphoreGive(s_turn);
                 }
             } else {
-                printf("\n[busy] Friday is still answering; ask again when she's done\n");
+                printf("\n[busy] Nexa is still answering; ask again when she's done\n");
             }
             while (ptt_down()) {              // wait for the button to come up
                 vTaskDelay(pdMS_TO_TICKS(20));

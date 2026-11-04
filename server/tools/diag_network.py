@@ -58,7 +58,7 @@ def probe(url: str, headers: dict | None = None, timeout: float = 15.0) -> dict:
         if https:
             sock = ssl.create_default_context().wrap_socket(sock, server_hostname=host)
         t3 = time.perf_counter()
-        request = [f"GET {path} HTTP/1.1", f"Host: {host}", "User-Agent: friday-diag", "Accept: */*",
+        request = [f"GET {path} HTTP/1.1", f"Host: {host}", "User-Agent: Nexa-diag", "Accept: */*",
                    "Connection: close"] + [f"{k}: {v}" for k, v in (headers or {}).items()]
         sock.sendall(("\r\n".join(request) + "\r\n\r\n").encode())
         data = sock.recv(65536)
@@ -270,7 +270,7 @@ def parse_gaps(text: str) -> list[float]:
 
 
 def main(argv: list[str] | None = None, out=print) -> int:
-    ap = argparse.ArgumentParser(description="Time the connections Friday depends on")
+    ap = argparse.ArgumentParser(description="Time the connections Nexa depends on")
     ap.add_argument("--only", default="gemini,weather,edge", help="parts to run: gemini, weather, edge, idle")
     ap.add_argument("--idle", action="store_true", help="also run the idle-connection test (takes minutes)")
     ap.add_argument("--gaps", default=",".join(str(g) for g in DEFAULT_GAPS), help="pauses for --idle, in seconds")

@@ -1,6 +1,6 @@
 # I2Sonic Worker — Phase 4 (voice in, voice out)
 
-The cloud "brain" that replaces the laptop: Whisper hears, Gemini (as Friday) answers, a free voice speaks.
+The cloud "brain" that replaces the laptop: Whisper hears, Gemini (as Nexa) answers, a free voice speaks.
 
 ```
 GET  /health                                          -> {"ok": true, "voices": ["melotts","aura","gemini"], ...}
@@ -12,7 +12,7 @@ POST /ask    16 kHz PCM or WAV + X-Device-Token      -> heard + reply + audio   
 POST /ask?debug=1                                     -> {"heard", "reply", ...}   JSON only, no voice (laptop testing)
 ```
 
-In the Friday repo this folder is `worker/`.
+In the Nexa repo this folder is `worker/`.
 
 ## Voices
 
@@ -36,7 +36,7 @@ Tried in the order of `STT_PROVIDERS` in `wrangler.toml`.
 | `groq` | ~2,000 requests / day | Optional backup: `npx wrangler secret put GROQ_API_KEY` (free key at console.groq.com) |
 
 Silence and Whisper's usual hallucinations ("Thanks for watching!", "you") count as nothing heard:
-Friday says *"Sorry, I didn't catch that"* and Gemini isn't called. Recordings must be 0.3–30 s.
+Nexa says *"Sorry, I didn't catch that"* and Gemini isn't called. Recordings must be 0.3–30 s.
 
 ## Phase 4: deploy and test hearing
 
@@ -54,7 +54,7 @@ Any 16-bit WAV of you asking something works (the laptop's `last_question.wav` i
 | # | Test | Expected |
 |---|---|---|
 | 1 | `$u/health` | `"stt":["workers","groq"]`, `"groq_key":true` if you set it |
-| 2 | The `/ask?debug=1` call | `heard` = what you said, `reply` = Friday's answer, `stt_provider: workers` |
+| 2 | The `/ask?debug=1` call | `heard` = what you said, `reply` = Nexa's answer, `stt_provider: workers` |
 | 3 | Same call with a WAV of silence | `heard` empty, reply "Sorry, I didn't catch that..." |
 
 | Error | Meaning |
@@ -71,7 +71,7 @@ npm run deploy
 $u = "https://i2sonic.YOUR-SUBDOMAIN.workers.dev"
 $t = (Select-String -Path .dev.vars -Pattern '^DEVICE_TOKEN=(.*)$').Matches[0].Groups[1].Value.Trim().Trim('"')
 $h = @{ "X-Device-Token" = $t }
-$b = '{"text":"Hello, I am Jarvis. How can I help?"}'
+$b = '{"text":"Hello, I am Nexa. How can I help?"}'
 Invoke-WebRequest -Method Post -Uri "$u/tts"               -Headers $h -ContentType "application/json" -Body $b -OutFile melo.mp3
 Invoke-WebRequest -Method Post -Uri "$u/tts?provider=aura" -Headers $h -ContentType "application/json" -Body $b -OutFile aura.wav
 start melo.mp3

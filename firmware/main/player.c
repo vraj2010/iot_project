@@ -158,7 +158,7 @@ static void mixer_task(void *arg)
         bool vfin = (bits & BIT_FINISHED) != 0;
         size_t nv = 0, nm = 0, nf = 0;
 
-        // ---- Friday's voice: prebuffer, play, refill if the network stalls
+        // ---- Nexa's voice: prebuffer, play, refill if the network stalls
         if (s_vstate == ST_WAIT && (xStreamBufferBytesAvailable(s_voice.sb) >= s_vneed || vfin)) {
             s_vstate = ST_PLAY;
         }
@@ -437,7 +437,7 @@ void player_volume_load(void)
 {
     nvs_handle_t h;
     uint8_t v = DEFAULT_VOLUME;
-    if (nvs_open("friday", NVS_READONLY, &h) == ESP_OK) {
+    if (nvs_open("Nexa", NVS_READONLY, &h) == ESP_OK) {
         nvs_get_u8(h, "volume", &v);
         nvs_close(h);
     }
@@ -451,7 +451,7 @@ void player_volume_save(void)
         return;
     }
     nvs_handle_t h;
-    if (nvs_open("friday", NVS_READWRITE, &h) == ESP_OK) {
+    if (nvs_open("Nexa", NVS_READWRITE, &h) == ESP_OK) {
         if (nvs_set_u8(h, "volume", (uint8_t)s_volume) == ESP_OK && nvs_commit(h) == ESP_OK) {
             s_saved_volume = s_volume;
         }

@@ -1,15 +1,16 @@
-"""The wake word. openWakeWord scores every 80 ms frame from 0 to 1 for ONE phrase: "hey jarvis" (built in)
-or your own model, e.g. "hey friday". Other speech, music and noise stay near 0; crossing WAKE_THRESHOLD
-means the phrase was said.
+"""The wake word engine for Nexa.
 
-The model files (about 5 MB) are downloaded from openWakeWord's GitHub releases the first time.
+Continuously detects "hey nexa" or "nexa" using an asynchronous speech spotter (VAD + Whisper),
+or a custom ONNX model from server/models/ (e.g. models/hey_nexa.onnx).
 
     python -m ears.wake       live meter: mic level, speech, and the wake word's score as you say it
-                              (also written to wake_test.log, for comparing runs)
 """
 
 from __future__ import annotations
 
+import queue
+import re
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -18,32 +19,108 @@ HERE = Path(__file__).resolve().parents[1]           # the server folder: custom
 
 
 class WakeWord:
-    def __init__(self, model: str = "hey_jarvis") -> None:
-        try:
-            from openwakeword.model import Model
-            from openwakeword.utils import download_models
-        except ImportError as exc:
-            raise RuntimeError("openwakeword isn't installed: pip install -r requirements.txt") from exc
+    def __init__(self, model: str = "hey_nexa") -> None:
+        self.phrase = "hey nexa"
+        self._onnx_model = None
+
         path = Path(model)
-        if path.suffix in (".onnx", ".tflite"):
-            path = path if path.is_absolute() else HERE / path
-            if not path.exists():
-                raise RuntimeError(f"wake word model not found: {path}")
-            download_models([path.stem])                 # the shared feature models (an official name is fetched too)
-            spec, self.phrase = str(path), path.stem
-        else:
-            download_models([model])                     # the shared feature models + this phrase, first run only
-            spec, self.phrase = model, model
-        self.model = Model(wakeword_models=[spec], inference_framework="onnx")
-        self.key = next(iter(self.model.models))
-        self.phrase = self.phrase.replace("_", " ").split(" v0")[0]
+        onnx_file = path if path.is_absolute() else HERE / path
+        if path.suffix in (".onnx", ".tflite") and onnx_file.is_file():
+            try:
+                from openwakeword.model import Model
+                from openwakeword.utils import download_models
+
+                download_models([onnx_file.stem])
+                self._onnx_model = Model(wakeword_models=[str(onnx_file)], inference_framework="onnx")
+                self._onnx_key = next(iter(self._onnx_model.models))
+                self.phrase = onnx_file.stem.replace("_", " ").split(" v0")[0]
+            except Exception as exc:
+                print(f"[wake] couldn't load ONNX model {onnx_file}: {exc}; using native spotter")
+                self._onnx_model = None
+
+        if self._onnx_model is None:
+            from faster_whisper import WhisperModel
+
+            from .vad import SpeechDetector
+
+            self.phrase = "hey nexa"
+            self.vad = SpeechDetector()
+            self._whisper = WhisperModel("tiny", device="cpu", compute_type="int8")
+            self._pattern = re.compile(r"\b(?:hey\s+)?n[eai]x[au]s?\b", re.IGNORECASE)
+            self._triggered = False
+            self._buf: list[np.ndarray] = []
+            self._speech_count = 0
+            self._silence_count = 0
+            self._queue: queue.Queue[np.ndarray | None] = queue.Queue(maxsize=3)
+            self._worker_thread = threading.Thread(target=self._worker, name="wake-worker", daemon=True)
+            self._worker_thread.start()
+
+    def _worker(self) -> None:
+        while True:
+            audio = self._queue.get()
+            if audio is None:
+                break
+            try:
+                segments, _ = self._whisper.transcribe(
+                    audio,
+                    language="en",
+                    beam_size=1,
+                    vad_filter=False,
+                    initial_prompt="Hey Nexa. Nexa.",
+                )
+                text = " ".join(s.text for s in segments).strip()
+                if self._pattern.search(text):
+                    print(f"\n[ears] wake word detected: \"{text}\"")
+                    self._triggered = True
+            except Exception:
+                pass
+            finally:
+                self._queue.task_done()
 
     def score(self, frame: np.ndarray) -> float:
-        return float(self.model.predict(frame)[self.key])
+        if self._onnx_model is not None:
+            return float(self._onnx_model.predict(frame)[self._onnx_key])
+
+        if self._triggered:
+            self._triggered = False
+            self.reset()
+            return 1.0
+
+        prob = self.vad.prob(frame)
+        if prob >= 0.35:
+            self._speech_count += 1
+            self._silence_count = 0
+            self._buf.append(frame)
+        elif self._speech_count > 0:
+            self._silence_count += 1
+            self._buf.append(frame)
+
+        # Submit speech chunk for background transcription (approx 350ms to 1.5s of speech)
+        if self._speech_count >= 4 and (self._silence_count >= 2 or len(self._buf) >= 18):
+            pcm = np.concatenate(self._buf)
+            audio = pcm.astype(np.float32) / 32768.0
+            if not self._queue.full():
+                self._queue.put_nowait(audio)
+            self._buf = []
+            self._speech_count = 0
+            self._silence_count = 0
+
+        if self._silence_count >= 5:
+            self.reset()
+
+        return 0.0
 
     def reset(self) -> None:
-        """Forget the last second of audio, so one "hey jarvis" can't trigger twice."""
-        self.model.reset()
+        """Reset the buffer and state."""
+        if self._onnx_model is not None:
+            self._onnx_model.reset()
+        else:
+            self._triggered = False
+            self._buf.clear()
+            self._speech_count = 0
+            self._silence_count = 0
+            if hasattr(self, "vad"):
+                self.vad.reset()
 
 
 def _main() -> None:
@@ -126,7 +203,6 @@ def _advice(voice: list[float]) -> None:
     print("Too quiet. Best: turn the mic up in Windows (Settings > System > Sound > Input > volume 100, and\n"
           "Microphone Boost under More sound settings > Recording > Microphone > Properties > Levels), then run this again.")
     print(f"If it's already at the top, put this in server\\.env:  MIC_GAIN_DB={min(40, round(total))}")
-
 
 
 if __name__ == "__main__":

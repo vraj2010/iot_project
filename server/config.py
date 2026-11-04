@@ -93,8 +93,8 @@ SESSION_GAP_MIN = _get_int("SESSION_GAP_MIN", 10)     # silence that starts a ne
 TIMEZONE = _get("TIMEZONE", "Asia/Kolkata")
 
 # --- Your documents (Cortex) ---------------------------------------
-# Documents are uploaded on the hosted Cortex page and stored in Supabase; Friday reads them
-# straight from the database. Empty = Cortex is off and Friday works exactly as before.
+# Documents are uploaded on the hosted Cortex page and stored in Supabase; Nexa reads them
+# straight from the database. Empty = Cortex is off and Nexa works exactly as before.
 # Use the SESSION pooler string (Supabase > Connect > Session pooler, port 5432).
 CORTEX_DATABASE_URL = _get("CORTEX_DATABASE_URL", "")
 CORTEX_TOP_K = _get_int("CORTEX_TOP_K", 4)                       # passages handed to Gemini per question
@@ -121,12 +121,11 @@ WHISPER_HINT = _get("WHISPER_HINT", "A person talking to a voice assistant named
 EARS = _get_bool("EARS", True)                       # 0 = no laptop mic (push-to-talk on the S3 only)
 MIC_DEVICE = _get("MIC_DEVICE", "")                  # part of the mic's name, or its number; blank = Windows default
 MIC_GAIN_DB = _get_float("MIC_GAIN_DB", 0.0)         # extra loudness for a quiet mic; python -m ears.wake suggests one
-# 0 = no wake word at all: Friday only listens after the button (BOOT on the board, see PTT_PORT, or Enter in
+# 0 = no wake word at all: Nexa only listens after the button (BOOT on the board, see PTT_PORT, or Enter in
 # speaker.py). 1 = also wake on WAKE_MODEL below.
-WAKE_ENABLED = _get_bool("WAKE_ENABLED", False)
-# A built-in openWakeWord phrase (hey_jarvis, alexa, hey_mycroft) or the path of your own model,
-# e.g. models/hey_friday.onnx (relative to this folder). Only that phrase wakes her, not other sounds.
-WAKE_MODEL = _get("WAKE_MODEL", "hey_jarvis")
+WAKE_ENABLED = _get_bool("WAKE_ENABLED", True)
+# Wake phrase (default: hey_nexa, or path to a custom model: models/hey_nexa.onnx).
+WAKE_MODEL = _get("WAKE_MODEL", "hey_nexa")
 WAKE_THRESHOLD = _get_float("WAKE_THRESHOLD", 0.6)   # 0..1: higher = fewer false wakes, more misses
 WAKE_COOLDOWN_S = _get_float("WAKE_COOLDOWN_S", 0.8) # deaf this long after she stops talking (her echo)
 WAKE_DEBUG = _get_bool("WAKE_DEBUG", False)          # print near-misses (scores from 0.3 up) to tune the threshold
@@ -137,7 +136,7 @@ EARS_VAD_THRESHOLD = _get_float("EARS_VAD_THRESHOLD", 0.5)  # 0..1: how sure the
 LISTEN_HOLD_S = _get_int("LISTEN_HOLD_S", 20)        # an idle GET /listen is held this long, then answered 204
 
 # --- The laptop as the speaker (speaker.py): the ESP32 is a plain Bluetooth speaker ----------------------------
-# speaker.py plays Friday's voice and your music on the laptop's audio output (set Windows to the "Friday"
+# speaker.py plays Nexa's voice and your music on the laptop's audio output (set Windows to the "Nexa"
 # Bluetooth speaker, or name it in SPEAKER_DEVICE) and reads the board's BOOT button from its USB serial port.
 SPEAKER_DEVICE = _get("SPEAKER_DEVICE", "")          # part of the output device's name, or its number; blank = Windows default
 SPEAKER_VOLUME = _get_int("SPEAKER_VOLUME", 80)      # 0..100, software volume (voice commands change it)

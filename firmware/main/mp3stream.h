@@ -4,7 +4,7 @@
 //
 // Two ways to use it:
 //   * mp3s_begin / mp3s_feed / mp3s_end: the shared default decoder, used for
-//     Friday's voice (one reply at a time, from the assistant task).
+//     Nexa's voice (one reply at a time, from the assistant task).
 //   * mp3s_new + mp3s_start / mp3s_push / mp3s_finish: a separate decoder, used
 //     by the music task, so a song and a spoken reply can decode at once.
 // Each decoder must be used from one task only.

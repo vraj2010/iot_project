@@ -31,7 +31,7 @@ class Script:
     def __init__(self, value=0.0):
         self.value = value
         self.resets = 0
-        self.phrase = "hey jarvis"
+        self.phrase = "hey nexa"
 
     def score(self, frame):
         return self.value
@@ -92,7 +92,7 @@ class Endpointing(unittest.TestCase):
 
     def test_a_blip_is_not_a_question(self):
         ep = endpoint.Endpointer(start_ms=800, min_speech_ms=240)
-        out = self.feed(ep, [0.9, 0.9] + [0.0] * 8)                    # 160 ms: the tail of "jarvis"
+        out = self.feed(ep, [0.9, 0.9] + [0.0] * 8)                    # 160 ms: the tail of "nexa"
         self.assertEqual(out[-1], endpoint.NOTHING)
 
     def test_in_between_scores_keep_a_sentence_going(self):
@@ -243,7 +243,7 @@ class NeverHerOwnVoice(Base):
 
     def test_status(self):
         s = self.ears.status()
-        self.assertEqual((s["wake_word"], s["state"], s["deaf"]), ("hey jarvis", "idle", False))
+        self.assertEqual((s["wake_word"], s["state"], s["deaf"]), ("hey nexa", "idle", False))
 
 
 def _until(cond, timeout=2.0):

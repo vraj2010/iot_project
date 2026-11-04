@@ -5,10 +5,10 @@
     python tools/diag_chat.py --timeout 30          wait longer before calling a request hung (default 20 s)
 
 What it tells you
-  * chat, reasoning low        exactly what Friday sends for a normal reply (OpenAI-compatible endpoint)
+  * chat, reasoning low        exactly what Nexa sends for a normal reply (OpenAI-compatible endpoint)
   * chat, no reasoning         the same without reasoning_effort: if THIS answers and the one above hangs,
                                reasoning_effort is what the model is choking on
-  * chat, streamed             how Friday streams spoken replies; reports time to the first words
+  * chat, streamed             how Nexa streams spoken replies; reports time to the first words
   * native generateContent     Google's own endpoint, not the compatibility one
   * other models               the same plain request on other Flash models your key can use, fastest first
 
@@ -136,7 +136,7 @@ def main() -> None:
         sys.exit("GEMINI_API_KEY is not set in .env")
 
     mine = config.GEMINI_MODEL
-    print(f"Friday's model: {mine}   reasoning: {config.GEMINI_REASONING or '(default)'}   "
+    print(f"Nexa's model: {mine}   reasoning: {config.GEMINI_REASONING or '(default)'}   "
           f"waiting up to {args.timeout:g} s per request\n")
 
     jobs: list[tuple[str, object]] = [

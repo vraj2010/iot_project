@@ -22,7 +22,7 @@ HALLUCINATIONS = {
 
 
 def _echoes_hint(key: str) -> bool:
-    """Whisper, given silence or noise, often just says its own prompt back ("A voice assistant named Friday."),
+    """Whisper, given silence or noise, often just says its own prompt back ("A voice assistant named Nexa."),
     and that would be sent to Gemini as if it were a question. Three or more words, nearly all of them from
     WHISPER_HINT = an echo. A real question has words of its own ("what", "is", "play"...)."""
     words = key.split()
@@ -32,7 +32,7 @@ def _echoes_hint(key: str) -> bool:
     if sum(w in set(hint_words) for w in words) / len(words) < 0.8:
         return False
     # ...and it must repeat a run of 4 words in the hint's own order (a real question that happens to use
-    # hint words, like "is Friday a voice assistant", doesn't)
+    # hint words, like "is Nexa a voice assistant", doesn't)
     n = min(4, len(hint_words))
     runs = {tuple(hint_words[i:i + n]) for i in range(len(hint_words) - n + 1)}
     return any(tuple(words[i:i + n]) in runs for i in range(len(words) - n + 1))

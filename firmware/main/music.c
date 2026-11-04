@@ -43,7 +43,7 @@ static volatile mstate_t s_state = M_STOPPED;
 static volatile int      s_track;          // song playing (or paused, or last played)
 static volatile float    s_base;           // seconds into the song where this stream started
 static volatile float    s_paused_at;
-static volatile bool     s_talk_paused;    // paused only because you're talking to Friday
+static volatile bool     s_talk_paused;    // paused only because you're talking to Nexa
 static mp3s_t           *s_dec;
 static uint8_t          *s_mp3;            // the song as downloaded (PSRAM)
 static size_t            s_mp3_cap;
@@ -182,7 +182,7 @@ static stream_result_t stream(const char *path)
 
     // Download as fast as the laptop sends (into PSRAM), decode only as fast as
     // the mixer plays. Unread data never piles up in the socket, where it would
-    // hold Wi-Fi receive buffers that Friday's next reply needs.
+    // hold Wi-Fi receive buffers that Nexa's next reply needs.
     esp_http_client_set_timeout_ms(client, READ_WAIT_MS);
     player_music_begin();
     mp3s_start(s_dec, on_pcm);
@@ -344,7 +344,7 @@ void music_init(void)
 }
 
 /* ------------------------------------------------------------------ */
-/*  Friday's actions and the turn around them                          */
+/*  Nexa's actions and the turn around them                          */
 /* ------------------------------------------------------------------ */
 
 void music_apply(const char *json)
@@ -360,7 +360,7 @@ void music_apply(const char *json)
     }
     const cJSON *what = cJSON_GetObjectItemCaseSensitive(doc, "music");
     if (cJSON_IsString(what) && s_cmds) {
-        s_talk_paused = false;               // Friday changed the music: don't undo it after the turn
+        s_talk_paused = false;               // Nexa changed the music: don't undo it after the turn
         const char *m = what->valuestring;
         const cJSON *track = cJSON_GetObjectItemCaseSensitive(doc, "track");
         const cJSON *title = cJSON_GetObjectItemCaseSensitive(doc, "title");

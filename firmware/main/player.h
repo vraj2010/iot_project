@@ -1,10 +1,10 @@
-// The speaker's mixer: Friday's voice, music and chimes play at the same time.
+// The speaker's mixer: Nexa's voice, music and chimes play at the same time.
 //
 // One task owns the speaker and mixes three buffers into it at 16 kHz:
 //   voice  - reply audio. Starts once PREBUFFER_MS is stored, so short network
 //            stalls are absorbed instead of heard as gaps (same as before).
 //   music  - the current song, fed by the music task. Ducked (quieter) while
-//            Friday speaks or while you talk to her.
+//            Nexa speaks or while you talk to her.
 //   chimes - short tones, mixed on top.
 // The amp is switched off when nothing has played for a moment.
 #pragma once
@@ -23,7 +23,7 @@ typedef struct {
 // Allocate the buffers (in PSRAM) and start the mixer task. Call once.
 void player_init(void);
 
-// ---- Friday's voice (one reply at a time)
+// ---- Nexa's voice (one reply at a time)
 
 // Begin a new reply. Call before the first player_write().
 void player_start(void);
@@ -51,7 +51,7 @@ uint32_t player_music_played(void);                   // samples of this song pl
 
 // ---- Levels
 
-void player_set_duck(bool on);                        // music quieter (you're talking to Friday)
+void player_set_duck(bool on);                        // music quieter (you're talking to Nexa)
 void player_set_listening(bool on);                   // music silent while the mic records
 void player_set_volume(int percent);                  // master volume 0-100, all sounds
 int  player_volume(void);

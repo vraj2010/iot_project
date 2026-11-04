@@ -12,7 +12,7 @@ mutagen>=1.47
 tzdata ; sys_platform == "win32"
 # Windows voice (used when Piper isn't set up)
 pyttsx3>=2.90 ; sys_platform == "win32"
-# The laptop's ears: its microphone and the wake word ("hey jarvis", or your own "hey friday").
+# The laptop's ears: its microphone and the wake word ("hey nexa").
 # The speech detector (Silero) and the local command model (MiniLM) run on onnxruntime, tokenizers and
 # huggingface_hub, which faster-whisper already installs.
 sounddevice>=0.4.6

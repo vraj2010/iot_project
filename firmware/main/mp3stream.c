@@ -148,7 +148,7 @@ int mp3s_rate_of(const mp3s_t *d)   { return d ? d->rate : 0; }
 int mp3s_frames_of(const mp3s_t *d) { return d ? d->frames : 0; }
 
 /* ------------------------------------------------------------------ */
-/*  The shared default decoder (Friday's voice), same API as before    */
+/*  The shared default decoder (Nexa's voice), same API as before    */
 /* ------------------------------------------------------------------ */
 
 static mp3s_t *s_default;

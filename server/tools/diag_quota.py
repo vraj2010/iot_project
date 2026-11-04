@@ -3,7 +3,7 @@
     python tools/diag_quota.py                       your model plus a few others, one tiny request each
     python tools/diag_quota.py --models a,b          exactly these models
 
-Google's 429 reply says which limit was hit (per minute, per day, tokens...) and how long to wait, but Friday
+Google's 429 reply says which limit was hit (per minute, per day, tokens...) and how long to wait, but Nexa
 only prints "rate limit hit". This asks once per model and prints Google's own explanation. Each probe is a
 single tiny request, so it costs next to nothing. The API key is never printed.
 """
@@ -83,7 +83,7 @@ def main() -> None:
 
     models = [m.strip() for m in args.models.split(",") if m.strip()] if args.models else \
         [config.GEMINI_MODEL] + [m for m in DEFAULT_OTHERS if m != config.GEMINI_MODEL]
-    print(f"Friday's model: {config.GEMINI_MODEL}\n")
+    print(f"Nexa's model: {config.GEMINI_MODEL}\n")
 
     results: dict[str, dict] = {}
     threads = [threading.Thread(target=probe, args=(m, results), daemon=True) for m in models]
@@ -95,7 +95,7 @@ def main() -> None:
     daily = False
     for m in models:
         res = results.get(m) or {"status": "?", "secs": 0.0, "message": "no result", "viol": [], "retry": ""}
-        mark = "  <- Friday uses this" if m == config.GEMINI_MODEL else ""
+        mark = "  <- Nexa uses this" if m == config.GEMINI_MODEL else ""
         print(f"{'OK  ' if res['status'] == 200 else 'FAIL'} {m}: {res['status']} in {res['secs']:.1f} s{mark}")
         if res["status"] == 429:
             for v in res["viol"]:

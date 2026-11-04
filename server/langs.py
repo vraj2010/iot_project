@@ -1,4 +1,4 @@
-"""Languages Friday can hear and speak: which Whisper code, which Edge voice, which script.
+"""Languages Nexa can hear and speak: which Whisper code, which Edge voice, which script.
 
 The voice for a sentence is chosen from the script it is written in (Devanagari, Gujarati...), so
 a reply in Hindi is always read by the Hindi voice, whatever Gemini did or didn't announce. Hindi
@@ -48,7 +48,7 @@ _turn = "en"                           # the language of the question being answ
 
 
 def enabled() -> list[str]:
-    """Codes from LANGUAGES that Friday knows (English always included)."""
+    """Codes from LANGUAGES that Nexa knows (English always included)."""
     codes = [c.strip().lower() for c in config.LANGUAGES.split(",")]
     out = [c for c in codes if c in LANGS]
     return out if "en" in out else ["en"] + out

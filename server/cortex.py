@@ -1,7 +1,7 @@
-"""Cortex, Friday's document memory: the laptop half. The contract is ../docs/cortex.md.
+"""Cortex, Nexa's document memory: the laptop half. The contract is ../docs/cortex.md.
 
 Documents are uploaded on the hosted page; it parses, chunks and embeds them into Supabase
-(schema `cortex`). Friday reads them straight from the database:
+(schema `cortex`). Nexa reads them straight from the database:
 
   catalog()         the ready documents (id, filename, subject), kept in RAM and refreshed in the
                     background every CORTEX_LIST_S seconds: building a prompt never waits for it
@@ -20,7 +20,7 @@ The database connections are long-lived (Supabase session pooler, TLS, TCP keep-
 tcp_user_timeout, a statement_timeout set at connect time), opened and warmed in the background at
 start-up and pinged when idle. Every call has a time limit: a call that runs out of time is cancelled,
 its connection closed and replaced, so one dead network path can't make the next turns wait too. All of
-Cortex's threads are daemon threads. CORTEX_DATABASE_URL empty = all of this is off and Friday behaves
+Cortex's threads are daemon threads. CORTEX_DATABASE_URL empty = all of this is off and Nexa behaves
 exactly as before.
 
 Citations: the turn result lists them; /chat JSON and the X-Citations header of a NON-streamed /say or /ask
@@ -128,7 +128,7 @@ _WORD = re.compile(r"[a-z0-9]+")
 # Words that say nothing about which document is meant, or that turn up in ordinary questions all the time
 _GENERIC = set("""a an the is are was were be been am i me my mine you your yours it its this that these those to of in
 on at for with and or but not no do does did have has had what when where who whom which how why can could would
-should will shall may might about tell said say please friday hey ok okay so just than then there here from by as
+should will shall may might about tell said say please Nexa hey ok okay so just than then there here from by as
 into notes note final draft copy version document documents doc docs file files scan scanned page pages chapter
 chapters unit part lecture lec week class new old updated image img pdf docx txt untitled sample test edited print
 printable full complete summary book guide manual report paper slides deck handout worksheet assignment homework
@@ -218,7 +218,7 @@ def spoken_name(filename: str) -> str:
 
 
 def describe(docs: list[dict], limit: int = 20) -> str:
-    """One line per document, for Friday's prompt."""
+    """One line per document, for Nexa's prompt."""
     lines = [f"- {d['filename']}" + (f" ({d['subject']})" if d.get("subject") else "") for d in docs[:limit]]
     if len(docs) > limit:
         lines.append(f"- and {len(docs) - limit} more")
@@ -340,7 +340,7 @@ class _Conn:
             info = {}
         ms = self.statement_ms()
         kwargs = dict(autocommit=True, connect_timeout=5, keepalives=1, keepalives_idle=30, keepalives_interval=10,
-                      keepalives_count=3, application_name="friday-cortex", row_factory=dict_row,
+                      keepalives_count=3, application_name="Nexa-cortex", row_factory=dict_row,
                       prepare_threshold=None)          # works through either Supabase pooler
         if "sslmode" not in info:
             kwargs["sslmode"] = "require"
@@ -1154,7 +1154,7 @@ if __name__ == "__main__":
         if res.get("error"):
             print(res["error"])
         for p in res.get("passages") or []:
-            mark = "" if p["similarity"] >= threshold else "   (below CORTEX_MIN_SIMILARITY: Friday wouldn't use it)"
+            mark = "" if p["similarity"] >= threshold else "   (below CORTEX_MIN_SIMILARITY: Nexa wouldn't use it)"
             print(f"\n[{p['n']}] {p['filename']} page {p['page']}  similarity {p['similarity']:.3f}"
                   f"{'  (keyword)' if p['keyword_hit'] else ''}{mark}\n{p['text'][:300]}")
         print(f"\nCORTEX_MIN_SIMILARITY is {threshold}. Set it just below the similarity of the passages that "

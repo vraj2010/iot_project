@@ -1,10 +1,10 @@
-"""Friday's jukebox: finds songs in the library, keeps the play queue, and
+"""Nexa's jukebox: finds songs in the library, keeps the play queue, and
 prepares the audio the speaker streams.
 
 The speaker does the playing; the laptop decides what plays. A reply can carry
 an action for the speaker (play track 12, pause, volume 60), and the speaker
 reports what it's doing in an X-Music-State header with every question, so
-Friday always knows what's on.
+Nexa always knows what's on.
 
     GET /music/<id>?t=<seconds>   a song (from t seconds in), 16 kHz mono MP3
     GET /music/next?after=<id>    whatever comes next in the queue (204 = nothing)
@@ -52,7 +52,7 @@ def _similar(query: str, field: str) -> float:
 
 
 def spoken(result) -> str:
-    """What Friday says after a successful play / pause / skip / volume result ("Here's Kesariya.", "Paused."),
+    """What Nexa says after a successful play / pause / skip / volume result ("Here's Kesariya.", "Paused."),
     or "" when it needs Gemini to word it (an error, or anything else)."""
     if not isinstance(result, dict) or "error" in result:
         return ""
@@ -176,7 +176,7 @@ class Jukebox:
         return [], "none"
 
     def closest(self, query: str, n: int = 3) -> list[str]:
-        """A few near-misses, so Friday can say what she does have."""
+        """A few near-misses, so Nexa can say what she does have."""
         with self.lock:
             tracks = list(self._tracks.values())
         q = _FILLER.sub(" ", query or "")
@@ -210,7 +210,7 @@ class Jukebox:
         return None
 
     def describe(self) -> str:
-        """One line for Friday's prompt."""
+        """One line for Nexa's prompt."""
         d = self.device
         t = self.current()
         n = self.count()

@@ -1,4 +1,4 @@
-"""Commands Friday answers by herself on the laptop: no Gemini, no tokens, a few milliseconds.
+"""Commands Nexa answers by herself on the laptop: no Gemini, no tokens, a few milliseconds.
 
     heard ─▶ exact phrases ─▶ similar wordings (MiniLM) ─▶ otherwise Gemini, as before
              "pause"           "hold the music a sec"
@@ -8,7 +8,7 @@
 Only clear-cut commands are taken: anything with a negation, a number the phrases didn't catch, more than
 INTENT_MAX_WORDS words, or a song the library can't find goes to Gemini, which understands it properly.
 
-    python intents.py "turn it down a bit"      what Friday would do, and the model's score for each command
+    python intents.py "turn it down a bit"      what Nexa would do, and the model's score for each command
 """
 
 from __future__ import annotations
@@ -25,9 +25,9 @@ import config
 
 # ------------------------------------------------------------------ cleaning up what Whisper heard
 
-_WAKE = re.compile(r"^(?:(?:hey|hi|ok|okay)\s+)?(?:nexa|friday|jarvis|alexa)\b\s*")
+_WAKE = re.compile(r"^(?:(?:hey|hi|ok|okay)\s+)?(?:nexa|Nexa)\b\s*")
 _LEAD = re.compile(r"^(?:(?:can|could|would|will) you\s+|please\s+|just\s+|now\s+|ok(?:ay)?\s+|so\s+|and\s+|um+\s+|uh+\s+)+")
-_TAIL = re.compile(r"(?:\s+(?:please|for me|now|thanks|thank you|nexa|friday|jarvis|alexa))+$")
+_TAIL = re.compile(r"(?:\s+(?:please|for me|now|thanks|thank you|nexa|Nexa))+$")
 _NEGATION = re.compile(r"\b(?:dont|do not|never|not|no|cant|cannot|wont|stop asking)\b")
 _QUESTION = re.compile(r"^(?:what|whats|who|whos|why|how|when|where|which|is|are|do|does|did|can|could|would|should|will)\b")
 
@@ -37,7 +37,7 @@ _TENS = {w: 10 * i for i, w in enumerate("_ _ twenty thirty forty fifty sixty se
 
 
 def normalize(text: str) -> str:
-    """'Hey Friday, could you pause the music, please?' -> 'pause the music'."""
+    """'Hey Nexa, could you pause the music, please?' -> 'pause the music'."""
     t = (text or "").lower().replace("’", "'").replace("'", "")
     t = re.sub(r"[^\w\s%]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()

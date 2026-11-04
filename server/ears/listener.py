@@ -7,7 +7,7 @@ it asks, with two kinds of GET /listen (server.py):
     idle poll   wait_for_wake()       "tell me when you hear the wake word"  ->  a wake id, or nothing (204)
     awake poll  wait_for_question()   "give me what was said after it"       ->  the recording, or None
 
-Friday mustn't wake herself up. Whenever a turn is running (busy()) and until the speaker's next idle poll,
+Nexa mustn't wake herself up. Whenever a turn is running (busy()) and until the speaker's next idle poll,
 the wake word is ignored: the speaker only polls again once its reply has finished playing, so that poll is
 the moment she has stopped talking. WAKE_COOLDOWN_S then covers the echo of her last word.
 """

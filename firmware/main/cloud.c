@@ -319,7 +319,7 @@ static esp_err_t on_http_event(esp_http_client_event_t *e)
 }
 
 /* ------------------------------------------------------------------ */
-/*  Choosing the brain: the laptop (friday-local) when it's there,     */
+/*  Choosing the brain: the laptop (Nexa-local) when it's there,     */
 /*  otherwise the Cloudflare Worker.                                   */
 /* ------------------------------------------------------------------ */
 
@@ -434,7 +434,7 @@ static int pick_brain(char *base, size_t len)
             snprintf(base, len, "http://%s:%d", ip, port);
             brain = CLOUD_BRAIN_LAPTOP;
         } else {
-            laptop_lost("is not answering (asleep, off, or friday-local not running)");
+            laptop_lost("is not answering (asleep, off, or Nexa-local not running)");
         }
     }
     if (brain == CLOUD_BRAIN_NONE && (USE_WORKER_FALLBACK || !USE_LAPTOP)) {
@@ -899,7 +899,7 @@ int cloud_listen_wait(int hold_s)
         // A quick failure is usually a stale kept-open connection; a laptop that has gone away doesn't
         // answer the probe either, and is looked for again.
         if (esp_timer_get_time() - t0 < 5000000 && !net_can_connect(ip, port, LAPTOP_PROBE_MS)) {
-            laptop_lost("is not answering (asleep, off, or friday-local not running)");
+            laptop_lost("is not answering (asleep, off, or Nexa-local not running)");
         }
         return -1;
     }
@@ -921,9 +921,9 @@ int cloud_listen_wait(int hold_s)
     if (status != s_listen_said) {
         s_listen_said = status;
         printf("[ears] the laptop answered /listen with HTTP %d%s\n", status,
-               status == 401 ? ": DEVICE_TOKEN in secrets.h doesn't match friday-local's .env" :
-               status == 503 ? ": its mic is off (EARS in friday-local's .env, or see its window)" :
-               status == 404 ? ": friday-local is older than this firmware" : "");
+               status == 401 ? ": DEVICE_TOKEN in secrets.h doesn't match Nexa-local's .env" :
+               status == 503 ? ": its mic is off (EARS in Nexa-local's .env, or see its window)" :
+               status == 404 ? ": Nexa-local is older than this firmware" : "");
     }
     return -1;
 }

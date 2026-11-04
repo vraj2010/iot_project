@@ -1,8 +1,8 @@
-# cortex-web: Friday's document upload page
+# cortex-web: Nexa's document upload page
 
-The hosted half of **Cortex**, Friday's document memory (contract: [`docs/cortex.md`](../docs/cortex.md)).
+The hosted half of **Cortex**, Nexa's document memory (contract: [`docs/cortex.md`](../docs/cortex.md)).
 A password-protected page where you drop PDFs, Word files and text files. Each file is parsed,
-cut into small page-exact passages, embedded with Gemini and stored in Supabase (pgvector). Friday on
+cut into small page-exact passages, embedded with Gemini and stored in Supabase (pgvector). Nexa on
 the laptop searches those passages and cites them; her answers show up here under "Recent answers",
 with links that open the PDF at the cited page.
 
@@ -60,7 +60,7 @@ All routes except `login`, `logout` and `session` need the session cookie.
 | `GET /api/documents` | | `{documents: [...]}` newest first, with `progress` 0..1 |
 | `DELETE /api/documents/{id}` | | deletes the row (chunks cascade) and the stored file |
 | `POST /api/search` | `{query, document_id?, document?, limit?}` (`document_id` = exactly that document; `document` = filename contains) | `{passages: [{n, filename, page, similarity, content, ...}], timings: {embed_ms, search_ms, total_ms}}` |
-| `GET /api/answers?limit=20` | | Friday's recent document answers (`cortex.answers`) |
+| `GET /api/answers?limit=20` | | Nexa's recent document answers (`cortex.answers`) |
 | `GET /api/file/{id}?page=N` | | 302 to a 5-minute signed download URL (`#page=N` for PDFs) |
 
 ## Environment variables
@@ -73,7 +73,7 @@ All routes except `login`, `logout` and `session` need the session cookie.
 | `GEMINI_API_KEY` | yes | Google AI Studio key, used for embeddings |
 | `UPLOAD_PASSWORD` | yes | The page's password, **at least 12 characters** (otherwise every `/api` call returns 500 and the log says why) |
 | `SESSION_SECRET` | yes | Long random string that signs the cookie (`python -c "import secrets; print(secrets.token_urlsafe(48))"`). Changing it signs everyone out. |
-| `GEMINI_EMBED_MODEL` | no | default `gemini-embedding-001` (must match Friday's) |
+| `GEMINI_EMBED_MODEL` | no | default `gemini-embedding-001` (must match Nexa's) |
 | `STORAGE_BUCKET` | no | default `cortex-docs` |
 | `MAX_UPLOAD_MB` | no | default `50` (the bucket's own limit is also 50 MB) |
 | `INGEST_BUDGET_S` | no | work time per ingest call, default `240` (Hobby functions stop at 300 s) |

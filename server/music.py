@@ -1,4 +1,4 @@
-"""Friday's music library: your song files + clean metadata from Apple's iTunes Search API.
+"""Nexa's music library: your song files + clean metadata from Apple's iTunes Search API.
 
     python music.py scan              index MUSIC_DIR (new or changed files only)
     python music.py scan --rescan     look every song up again
@@ -509,7 +509,7 @@ def list_tracks(review_only: bool) -> None:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Friday's music library")
+    ap = argparse.ArgumentParser(description="Nexa's music library")
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scan", help="index new or changed songs, then convert them for the speaker")
     s.add_argument("--rescan", action="store_true", help="look every song up again")

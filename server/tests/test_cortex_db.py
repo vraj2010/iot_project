@@ -2,9 +2,9 @@
 with known vectors go in, and cortex.search() (the SQL function, through this module) must find the right ones.
 
 Skipped unless CORTEX_TEST_DATABASE_URL points at a SCRATCH database (its cortex tables are emptied!), e.g.
-    createdb friday_cortex_test && psql -d friday_cortex_test -c "create schema extensions" \
-        && psql -d friday_cortex_test -f ../../cortex-web/sql/schema.sql
-    CORTEX_TEST_DATABASE_URL="postgresql://me@/friday_cortex_test?host=/tmp&sslmode=disable" python -m unittest test_cortex_db
+    createdb Nexa_cortex_test && psql -d Nexa_cortex_test -c "create schema extensions" \
+        && psql -d Nexa_cortex_test -f ../../cortex-web/sql/schema.sql
+    CORTEX_TEST_DATABASE_URL="postgresql://me@/Nexa_cortex_test?host=/tmp&sslmode=disable" python -m unittest test_cortex_db
 Gemini is never called: the question's embedding is faked."""
 
 import math
@@ -205,7 +205,7 @@ class RealDatabase(unittest.TestCase):
     def test_a_dropped_connection_is_reopened_transparently(self):
         self.search("warm it up")
         killed = self.admin.execute("select count(pg_terminate_backend(pid)) from pg_stat_activity "
-                                    "where application_name = 'friday-cortex'").fetchone()[0]
+                                    "where application_name = 'Nexa-cortex'").fetchone()[0]
         self.assertGreaterEqual(killed, 1)
         time.sleep(0.2)
         self.assertEqual(len(self.search("what are mitochondria")), 2)

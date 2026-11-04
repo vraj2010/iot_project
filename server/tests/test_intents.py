@@ -1,4 +1,4 @@
-"""Local commands: what Friday answers by herself, and what she leaves to Gemini."""
+"""Local commands: what Nexa answers by herself, and what she leaves to Gemini."""
 
 import datetime
 import re
@@ -48,10 +48,10 @@ class Words:
 
 class Cleaning(unittest.TestCase):
     def test_wake_word_politeness_and_punctuation_go(self):
-        self.assertEqual(intents.normalize("Hey Friday, could you pause the music, please?"), "pause the music")
-        self.assertEqual(intents.normalize("Jarvis. What's playing?"), "whats playing")
+        self.assertEqual(intents.normalize("Hey Nexa, could you pause the music, please?"), "pause the music")
+        self.assertEqual(intents.normalize("Nexa. What's playing?"), "whats playing")
         self.assertEqual(intents.normalize("Okay, next song, thanks."), "next song")
-        self.assertEqual(intents.normalize("Alexa, volume 40."), "volume 40")
+        self.assertEqual(intents.normalize("Hey Nexa, volume 40."), "volume 40")
         self.assertEqual(intents.normalize("  "), "")
 
     def test_numbers_in_digits_and_words(self):
@@ -71,7 +71,7 @@ class Phrases(unittest.TestCase):
         return self.r.route(said, self.jb if jb == "default" else jb)
 
     def test_pause_in_its_usual_wordings(self):
-        for said in ("pause", "Pause.", "Pause the music.", "Hey Friday, pause it please", "hold the song"):
+        for said in ("pause", "Pause.", "Pause the music.", "Hey Nexa, pause it please", "hold the song"):
             hit = self.ask(said)
             self.assertIsNotNone(hit, said)
             self.assertEqual((hit.intent, hit.reply, hit.action, hit.how), ("pause", "Paused.", {"music": "pause"}, "phrase"))

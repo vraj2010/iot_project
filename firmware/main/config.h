@@ -13,23 +13,23 @@
 #endif
 
 // ---------- Brain: your laptop first, the Cloudflare Worker as backup ----------
-// The laptop runs friday-local (Whisper + Gemini + memory + voice). The board
+// The laptop runs Nexa-local (Whisper + Gemini + memory + voice). The board
 // finds it by UDP broadcast, so there is no IP to hardcode. When the laptop is
 // off or asleep, questions go to the Worker instead (no memory there).
-#define USE_LAPTOP           1      // 1 = look for friday-local on the laptop
-#define LAPTOP_HTTP_PORT     8765   // HTTP_PORT in friday-local's .env
-#define DISCOVERY_PORT       5006   // UDP_PORT in friday-local's .env
+#define USE_LAPTOP           1      // 1 = look for Nexa-local on the laptop
+#define LAPTOP_HTTP_PORT     8765   // HTTP_PORT in Nexa-local's .env
+#define DISCOVERY_PORT       5006   // UDP_PORT in Nexa-local's .env
 #define LAPTOP_RETRY_SEC     15     // how often to look again while the laptop is away
 #define LAPTOP_PROBE_MS      700    // "is it still there?" check before each question
 #define USE_WORKER_FALLBACK  1      // 1 = use the Worker when the laptop can't be reached
 
 // ---------- The laptop's mic (wake word) ----------
-// 1 = the laptop listens on its own mic for the wake word ("hey jarvis", or your own "hey friday") and
+// 1 = the laptop listens on its own mic for the wake word ("hey nexa") and
 //     sends the answer here; BOOT then means "listen now" (no holding), and falls back to push-to-talk on
-//     the S3's mic when the laptop can't be reached. Needs friday-local with EARS=1 in its .env.
+//     the S3's mic when the laptop can't be reached. Needs Nexa-local with EARS=1 in its .env.
 // 0 = push-to-talk on the S3's own mic only, as before.
 #define LAPTOP_MIC           1
-#define LISTEN_HOLD_SEC      20     // LISTEN_HOLD_S in friday-local's .env
+#define LISTEN_HOLD_SEC      20     // LISTEN_HOLD_S in Nexa-local's .env
 
 // ---------- Microphone ----------
 #define MIC_MAX4466   1          // analog module -> ADC
@@ -57,7 +57,7 @@
 #define MAX_RECORD_SEC      10   // longest question
 #define MAX_REPLY_SEC       60   // longest spoken answer
 #define VOLUME            1.0f   // 0.0 - 1.0 hardware ceiling (amp on 3V3 is quieter)
-#define DEFAULT_VOLUME      100  // 0-100 at first boot. "Friday, volume 60" changes it; it's remembered
+#define DEFAULT_VOLUME      100  // 0-100 at first boot. "Nexa, volume 60" changes it; it's remembered
 
 // ---------- Cleanup for the noisy MAX4466 ----------
 #define HPF_CUTOFF_HZ     100.0f // kills mains hum and rumble
@@ -81,22 +81,22 @@
 #define PREBUFFER_MS       500    // audio stored before speaking starts
 #define REBUFFER_MS        300    // refill this much if the network stalls mid-reply
 
-// ---------- Music (songs from your laptop's library; needs friday-local) ----------
+// ---------- Music (songs from your laptop's library; needs Nexa-local) ----------
 // "Play Kesariya", "pause", "next song", "louder"... Songs stream from the laptop
-// as 16 kHz mono MP3 and play under Friday's voice.
+// as 16 kHz mono MP3 and play under Nexa's voice.
 #define MUSIC_ENABLED       1
 #define MUSIC_DUCK          1
 #define MUSIC_PAUSE         2
-#define MUSIC_ON_TALK       MUSIC_DUCK  // while you hold BOOT and Friday answers: DUCK = music
+#define MUSIC_ON_TALK       MUSIC_DUCK  // while you hold BOOT and Nexa answers: DUCK = music
                                         // plays quietly underneath, PAUSE = stops and carries on after
-#define MUSIC_DUCK_LEVEL    0.15f       // music level while Friday answers (0.15 = about -16 dB)
+#define MUSIC_DUCK_LEVEL    0.15f       // music level while Nexa answers (0.15 = about -16 dB)
 #define MUSIC_MUTE_LISTENING 1          // 1 = silent while you hold BOOT, so Whisper hears you, not the song
 #define MUSIC_HIGHPASS_HZ   120         // cut deep bass the small speaker can't play anyway: it
                                         // draws big current spikes that can brown out the board (0 = off)
-#define MUSIC_GAIN          0.60f       // songs vs Friday's voice (songs are mastered loud)
+#define MUSIC_GAIN          0.60f       // songs vs Nexa's voice (songs are mastered loud)
 #define MUSIC_BUFFER_SEC    4           // song audio held in PSRAM (4 s = 128 KB)
 #define MUSIC_PREBUFFER_MS  600         // stored before a song starts
 #define MUSIC_DOWNLOAD_KB   3072        // the whole song is downloaded into PSRAM as it plays
                                         // (3 MB = 6 min of the laptop's 64 kbps), so the Wi-Fi
-                                        // link stays free for Friday's replies
+                                        // link stays free for Nexa's replies
 

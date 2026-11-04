@@ -1,9 +1,9 @@
--- Cortex: Friday's document memory. Source of truth for the database side.
+-- Cortex: Nexa's document memory. Source of truth for the database side.
 -- Applied to Supabase (project i2sonic). Idempotent: safe to run again.
 --
 -- Everything lives in its own schema `cortex`, which Supabase's auto-generated REST/GraphQL API
 -- does not expose. Only server-side code touches it: the Vercel ingest function (transaction
--- pooler) and Friday on the laptop (session pooler), both as the postgres role.
+-- pooler) and Nexa on the laptop (session pooler), both as the postgres role.
 
 create extension if not exists vector with schema extensions;
 create schema if not exists cortex;
@@ -62,7 +62,7 @@ create index if not exists chunks_embedding_ready_hnsw_idx on cortex.chunks
 create index if not exists chunks_fts_idx on cortex.chunks using gin (fts);
 create index if not exists chunks_document_idx on cortex.chunks (document_id);
 
--- What Friday answered from the documents, with citations: the "Recent answers" panel.
+-- What Nexa answered from the documents, with citations: the "Recent answers" panel.
 create table if not exists cortex.answers (
   id          bigint generated always as identity primary key,
   question    text        not null,

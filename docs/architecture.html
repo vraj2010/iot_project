@@ -1,4 +1,4 @@
-<title>Friday System Map</title>
+<title>Nexa System Map</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -95,14 +95,14 @@
 
 <div class="wrap">
   <header>
-    <p class="kicker">Clarivis / Friday — ESP32-S3 smart speaker</p>
-    <h1>Friday System Map</h1>
+    <p class="kicker">Clarivis / Nexa — ESP32-S3 smart speaker</p>
+    <h1>Nexa System Map</h1>
     <p class="lede">Two views of the same build: <b>Fig. 1</b> traces a spoken question from the speaker's mic to the reply in your ear — laptop first, Cloudflare Worker if the laptop's off, on-device SAM if nothing answers. <b>Fig. 2</b> is the board-level wiring on the ESP32‑S3 itself — where 5&nbsp;V comes in, where it drops to 3.3&nbsp;V, and which pins carry audio versus control.</p>
-    <p class="meta">D:\Projects\Friday — as of Oct 2026</p>
+    <p class="meta">D:\Projects\Nexa — as of Oct 2026</p>
   </header>
 
   <section>
-    <div class="fig-head"><span class="fig-num">FIG. 1</span><h2>Data &amp; control flow — asking Friday something</h2></div>
+    <div class="fig-head"><span class="fig-num">FIG. 1</span><h2>Data &amp; control flow — asking Nexa something</h2></div>
     <p class="fig-sub">Solid teal is the everyday path. Purple is a network hop to a cloud service. Amber dashed is the fallback taken only when the step before it fails. Gray dotted is the separate document-upload path, which never touches the speaker.</p>
 
     <div class="scroller">
@@ -178,7 +178,7 @@
 
           <rect class="box" x="390" y="490" width="440" height="55" rx="8"/>
           <text class="box-title" x="404" y="513">Memory</text>
-          <text class="box-sub" x="404" y="530">PostgreSQL · friday‑pg, Docker :5432</text>
+          <text class="box-sub" x="404" y="530">PostgreSQL · Nexa‑pg, Docker :5432</text>
 
           <rect class="box" x="390" y="570" width="440" height="55" rx="8"/>
           <text class="box-title" x="404" y="593">Voice</text>
@@ -272,7 +272,7 @@
           <path d="M1090,290 C1095,220 1085,150 1070,110" class="edge" stroke="#5a6978" stroke-width="2" stroke-dasharray="3 4" fill="none" marker-end="url(#ah-ingest)"/>
           <text class="edge-label" x="1100" y="180" fill="#5a6978">embed</text>
         </svg>
-        <figcaption>D:\Projects\Friday\server (Python) · firmware (ESP‑IDF) · worker (Cloudflare) · cortex-web (Vercel)</figcaption>
+        <figcaption>D:\Projects\Nexa\server (Python) · firmware (ESP‑IDF) · worker (Cloudflare) · cortex-web (Vercel)</figcaption>
       </figure>
     </div>
 
@@ -406,10 +406,10 @@
     <div class="fig-head"><h2 style="font-size:15px">Repo map</h2></div>
     <div class="tbl-wrap">
       <table>
-        <caption>D:\Projects\Friday</caption>
+        <caption>D:\Projects\Nexa</caption>
         <thead><tr><th>Folder</th><th>Role</th><th>Detail</th></tr></thead>
         <tbody>
-          <tr><td>db/</td><td>Memory database (Docker)</td><td>friday‑pg :5432 · Adminer :8080</td></tr>
+          <tr><td>db/</td><td>Memory database (Docker)</td><td>Nexa‑pg :5432 · Adminer :8080</td></tr>
           <tr><td>server/</td><td>Laptop brain (Python)</td><td>server.py · :8765 / UDP :5006</td></tr>
           <tr><td>firmware/</td><td>ESP32‑S3 firmware</td><td>ESP‑IDF 5.5</td></tr>
           <tr><td>worker/</td><td>Backup brain</td><td>Cloudflare Worker</td></tr>
@@ -420,5 +420,5 @@
     </div>
   </section>
 
-  <footer>generated for Friday / I2Sonic — Clarivis Intelligence</footer>
+  <footer>generated for Nexa / I2Sonic — Clarivis Intelligence</footer>
 </div>

@@ -118,7 +118,7 @@ esp_err_t net_find_laptop(int timeout_ms, char *ip, size_t ip_len, int *port)
         int n = recvfrom(sock, buf, sizeof(buf) - 1, 0, (struct sockaddr *)&from, &from_len);
         if (n >= 8 && memcmp(buf, "I2SONIC!", 8) == 0) {
             buf[n] = '\0';
-            int p = atoi(buf + 8);                    // friday-local adds its HTTP port
+            int p = atoi(buf + 8);                    // Nexa-local adds its HTTP port
             *port = (p > 0 && p < 65536) ? p : LAPTOP_HTTP_PORT;
             inet_ntoa_r(from.sin_addr, ip, ip_len);
             result = ESP_OK;

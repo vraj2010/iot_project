@@ -1,4 +1,4 @@
-# Cortex: Friday's document memory (contract)
+# Cortex: Nexa's document memory (contract)
 
 Both halves are built against this file. Change it first if a decision changes.
 
@@ -17,7 +17,7 @@ Source of truth: `cortex-web/sql/schema.sql` (+ `storage.sql` for the bucket). T
 filename_filter, min_similarity, rrf_k)` = hybrid vector + keyword search, one round trip, ~5-20 ms in the DB.
 Not exposed through Supabase's REST API; only server code connects, as `postgres`:
 - Vercel: `DATABASE_URL` = transaction pooler (port 6543) → psycopg with `prepare_threshold=None`.
-- Friday: `CORTEX_DATABASE_URL` = session pooler (port 5432) → one long-lived psycopg connection pool.
+- Nexa: `CORTEX_DATABASE_URL` = session pooler (port 5432) → one long-lived psycopg connection pool.
 
 Document status: `uploaded` → `processing` → `ready` | `failed` (reason in `error`). Only `ready` is searched:
 chunks are inserted with `searchable = false` and flipped to `true` in the same transaction that marks the
@@ -57,7 +57,7 @@ Target: a document question costs at most **~0.4 s more than an ordinary questio
 - Document list (names, subjects) for the prompt: cached in RAM, refreshed in the background, never awaited.
 - Passages handed to Gemini: top 4, each ≤1,200 chars, numbered `[1]..[4]`.
 - If the DB or Gemini embedding fails or takes > `CORTEX_TIMEOUT` (default 2.5 s), the turn carries on without
-  documents and Friday says she couldn't reach them — a document problem must never break a normal answer.
+  documents and Nexa says she couldn't reach them — a document problem must never break a normal answer.
   A call that times out must not keep holding a connection (cancel/close it), so one dead network path can't
   make the next turns wait too.
 - The prefetched result (raw question) is reused for the tool call only when Gemini's query is about the same

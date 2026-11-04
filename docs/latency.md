@@ -96,7 +96,7 @@ boss.") on your laptop, against the 2.7 s the server's own log showed.
 xiaozhi-esp32 and its server are open source and the best-known ESP32 voice assistant, so their code is the
 obvious thing to compare with. Reading it:
 
-| | xiaozhi (default setup) | Friday |
+| | xiaozhi (default setup) | Nexa |
 |---|---|---|
 | Connection | One WebSocket per session, Opus frames both ways | One HTTP request per question, the reply streamed back as one body |
 | Microphone | Streams live while you talk; the server finds the end of speech | The recording is uploaded after the button is released |

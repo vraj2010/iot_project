@@ -1,5 +1,5 @@
 // ============================================================
-//  Friday firmware: private settings
+//  Nexa firmware: private settings
 //  Copy this file to secrets.h and fill it in. git ignores secrets.h.
 // ============================================================
 #pragma once

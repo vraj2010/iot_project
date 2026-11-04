@@ -1,4 +1,4 @@
-"""FRIDAY local server: the laptop does the hearing, the voice and the memory;
+"""Nexa local server: the laptop does the hearing, the voice and the memory;
 Gemini does the thinking.
 
 It speaks exactly the same HTTP protocol as the Cloudflare Worker (/ask, /say,
@@ -6,7 +6,7 @@ It speaks exactly the same HTTP protocol as the Cloudflare Worker (/ask, /say,
 broadcast and falls back to the Worker when the laptop is off. Music is laptop
 only: GET /music/<id> and /music/next stream songs from your library.
 
-The laptop can also be Friday's ears (ears/): it listens for the wake word on its
+The laptop can also be Nexa's ears (ears/): it listens for the wake word on its
 own mic, and the S3 collects what was said with GET /listen. Simple commands
 ("pause", "volume 40", "play Kesariya") are answered here without Gemini (intents.py).
 
@@ -82,7 +82,7 @@ class Assistant:
             from jukebox import Jukebox
 
             self.jukebox = Jukebox(self.memory)
-        except Exception as exc:              # music is optional: never stop Friday starting
+        except Exception as exc:              # music is optional: never stop Nexa starting
             print(f"[music] off: {type(exc).__name__}: {exc}")
         self.router = None
         if config.LOCAL_COMMANDS:
@@ -319,7 +319,7 @@ class Handler(BaseHTTPRequestHandler):
         return bool(config.DEVICE_TOKEN) and self.headers.get("X-Device-Token", "") == config.DEVICE_TOKEN
 
     def _busy(self):
-        """Around every turn: the laptop's ears ignore the wake word while Friday may be talking."""
+        """Around every turn: the laptop's ears ignore the wake word while Nexa may be talking."""
         return self.ears.busy() if self.ears else nullcontext()
 
     def _listen(self, url) -> None:
@@ -498,7 +498,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"error": "the laptop's mic is off"}, 503)
             if self.ears.wake_now():
                 return self._json({"ok": True}, 202)
-            return self._json({"error": "busy: Friday is answering"}, 409)
+            return self._json({"error": "busy: Nexa is answering"}, 409)
 
         self.music_state = self.headers.get("X-Music-State")   # sent by speakers that can play music
         with self._busy(), self.assistant.turn_lock:
@@ -888,7 +888,7 @@ def _save(name: str, pcm: np.ndarray) -> None:
 
 def _exclusive(sock: socket.socket) -> None:
     """On Windows, SO_REUSEADDR lets a second program bind a port that is already in use, silently,
-    and the speaker then talks to whichever copy of Friday Windows picks (usually the old one).
+    and the speaker then talks to whichever copy of Nexa Windows picks (usually the old one).
     SO_EXCLUSIVEADDRUSE makes the second bind fail instead."""
     if sys.platform == "win32" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
@@ -916,13 +916,13 @@ class Server(ThreadingHTTPServer):
 def discovery_loop() -> None:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     if sys.platform == "win32":
-        _exclusive(sock)                       # a second Friday must not answer the speaker too
+        _exclusive(sock)                       # a second Nexa must not answer the speaker too
     else:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     try:
         sock.bind(("0.0.0.0", config.UDP_PORT))
     except OSError as exc:
-        print(f"[discovery] UDP port {config.UDP_PORT} is taken ({exc}): is another Friday server running? "
+        print(f"[discovery] UDP port {config.UDP_PORT} is taken ({exc}): is another Nexa server running? "
               f"The speaker won't find this one.")
         return
     reply = f"I2SONIC!{config.HTTP_PORT}".encode()
@@ -983,7 +983,7 @@ def run_test(a: Assistant, text: str | None, wav: str | None, music_state: str |
 
 
 def start_ears():
-    """The laptop's mic + wake word, or None (EARS=0, or something is missing: Friday works without it)."""
+    """The laptop's mic + wake word, or None (EARS=0, or something is missing: Nexa works without it)."""
     if not config.EARS:
         return None
     try:

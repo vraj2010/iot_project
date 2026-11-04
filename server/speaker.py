@@ -1,9 +1,9 @@
-"""The laptop as Friday's speaker, with the ESP32 as a plain Bluetooth speaker.
+"""The laptop as Nexa's speaker, with the ESP32 as a plain Bluetooth speaker.
 
     python server.py        in one terminal (the brain)
     python speaker.py       in another (this: the button, the voice and the music)
 
-Set Windows' sound output to the "Friday" Bluetooth speaker first (or name it: --out Friday). Then press the
+Set Windows' sound output to the "Nexa" Bluetooth speaker first (or name it: --out Nexa). Then press the
 board's BOOT button (or Enter in this window), say your question, and the answer plays through the board.
 
 What it does, the same things the S3 firmware did:
@@ -157,7 +157,7 @@ def chime(rate: int = OUT_RATE) -> np.ndarray:
 
 
 class Mixer:
-    """Friday's voice and the music, mixed into one output stream (the S3's mixer, on the laptop).
+    """Nexa's voice and the music, mixed into one output stream (the S3's mixer, on the laptop).
 
     Music is quiet while you talk (listening), ducked while she answers (replying or voice queued), full otherwise.
     """

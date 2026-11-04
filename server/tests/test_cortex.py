@@ -1,4 +1,4 @@
-"""Cortex, Friday's document memory: the gate, the inject / tool / prefetch paths, citations, failures and
+"""Cortex, Nexa's document memory: the gate, the inject / tool / prefetch paths, citations, failures and
 the answer log, with the database and Gemini replaced by fakes (no network)."""
 
 import http.client
@@ -923,7 +923,7 @@ class SilentServer(CortexCase):
         threading.Thread(target=serve, daemon=True).start()
         self.addCleanup(lambda: [c.close() for c in self.accepted])
         self.addCleanup(self.srv.close)
-        url = f"postgresql://friday:pw@127.0.0.1:{self.srv.getsockname()[1]}/db?sslmode=disable"
+        url = f"postgresql://Nexa:pw@127.0.0.1:{self.srv.getsockname()[1]}/db?sslmode=disable"
         for target, name, value in ((config, "CORTEX_DATABASE_URL", url), (config, "CORTEX_TIMEOUT", 0.3),
                                     (cortex, "AUX_TIMEOUT", 0.4), (cortex, "_db_search", REAL_DB_SEARCH)):
             p = mock.patch.object(target, name, value)

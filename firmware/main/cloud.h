@@ -1,4 +1,4 @@
-// Talks to Friday's server: friday-local on the laptop (plain HTTP on the home
+// Talks to Nexa's server: Nexa-local on the laptop (plain HTTP on the home
 // Wi-Fi) when it can be found, otherwise the Cloudflare Worker over HTTPS.
 // Both speak the same protocol, so the rest of the firmware doesn't care which.
 #pragma once
@@ -54,7 +54,7 @@ typedef struct {
     // Optional, for music. on_action gets what the reply asks the speaker to do
     // (JSON, e.g. {"music":"play","track":12}), before any audio. music_state
     // fills the X-Music-State header that tells the laptop what's playing; with
-    // it set, the laptop offers Friday its music tools.
+    // it set, the laptop offers Nexa its music tools.
     void (*on_action)(const char *json);
     void (*music_state)(char *buf, size_t len);
 } cloud_say_cb_t;
