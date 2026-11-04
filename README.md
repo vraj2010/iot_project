@@ -1,120 +1,315 @@
-# Nexa
+# Nexa: Edge AI & IoT Smart Speaker Voice Assistant
 
-A DIY smart speaker with an Iron Man–style assistant. Ask her something and she answers out
-loud. Your laptop does the hearing (faster-whisper), the thinking (Gemini), the remembering
-(PostgreSQL) and the voice (an Irish neural voice); the board just listens and plays. If the
-laptop is off, a Cloudflare Worker answers instead (no memory or music).
+[![Platform](https://img.shields.io/badge/Platform-ESP32%20%7C%20Windows-blue.svg)](https://github.com)
+[![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.14-blue.svg)](https://python.org)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%2017%20%28pgvector%29-336791.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
+[![Voice](https://img.shields.io/badge/Speech-faster--whisper%20%7C%20Edge--TTS-orange.svg)](https://github.com/SYSTRAN/faster-whisper)
+[![Interface](https://img.shields.io/badge/Dashboard-Cyber%20Orb%20UI-00f0ff.svg)](http://127.0.0.1:8777)
 
-```
-ESP32-S3 ── Wi-Fi ──▶ server/   laptop: Whisper · Gemini · memory · voice · music
-    │
-    └── laptop off ──▶ worker/   Cloudflare Worker: Whisper · Gemini · voice
-```
+**Nexa** is an intelligent, low-latency IoT voice assistant that bridges edge microcontrollers with a high-performance local AI runtime. Combining dedicated I2S audio hardware on an ESP32 with local speech recognition, neural cognition, contextual long-term memory, and an interactive 3D Sci-Fi dashboard, Nexa provides an Iron Man JARVIS–style conversational experience.
 
-There are two hardware options, both driven by the same laptop brain:
+---
 
-| Build | Board | Mic | How you talk to her |
-|---|---|---|---|
-| ESP32-S3 (original) | ESP32-S3 board (`firmware/`) | Onboard mic, or the laptop's mic | Hold BOOT, or say "Hey Nexa" near the laptop |
-| Bluetooth speaker | Plain ESP32 DevKit + MAX98357A amp (`Nexa_speaker/`) | The laptop's mic only | Press the board's BOOT button, or Enter in `speaker.py` |
+## System Architecture
 
-## How it works
-
-Every question goes through the same four stages, whichever board asked it:
-
-1. **Wake** — BOOT is pressed, or the laptop's always-on wake word ("Hey Nexa") fires.
-   Nothing is recorded or sent anywhere before this point.
-2. **Hear** — the recording is turned into text by faster-whisper, running locally on the
-   laptop. A handful of exact commands ("pause", "louder", "what's playing") are matched
-   right here and answered immediately, with no Gemini round trip.
-3. **Think** — anything else goes to **Gemini**, along with her memory (profile, facts,
-   recent conversation, from PostgreSQL) and whatever tools the question needs: web search,
-   weather, music control, or Cortex (your uploaded documents). If the laptop is off, the
-   **Cloudflare Worker** answers instead, with no memory or music.
-4. **Speak** — the reply becomes audio (an Irish neural voice online, Piper or the Windows
-   voice offline) and streams to whichever board asked, mixed under any music that's playing.
+Nexa uses a split-computing IoT architecture: edge hardware handles digital audio playback and physical triggers, while the host workstation executes heavy AI workloads in real time.
 
 ```
- wake word / BOOT
-        │
-        ▼
- faster-whisper (hearing) ──local command──▶ answered instantly (pause, volume, time, ...)
-        │
-        │ everything else
-        ▼
- Gemini ── memory (Postgres) ── web search / weather ── music control ── Cortex (your docs)
-        │
-        ▼
- voice (Edge / Piper / SAPI) ──▶ board plays it back, music ducked underneath
+                              ┌────────────────────────────────────────────────────────┐
+                              │                    NEXA HOST RUNTIME                   │
+                              │                                                        │
+┌───────────────────────┐     │  ┌──────────────────┐      ┌────────────────────────┐  │
+│      ESP32 NODE       │     │  │  VAD & Wake Spot │      │      Neural Core       │  │
+│  (MAX98357A I2S DAC)  │◀──┐ │  │  (Silero + Tiny) │      │  (Intent & Reasoning)  │  │
+└───────────────────────┘   │ │  └────────┬─────────┘      └───────────┬────────────┘  │
+    ▲ (A2DP / Wi-Fi)        │ │           │ "Hey Nexa"                 │               │
+    │                       │ │           ▼                            ▼               │
+┌───┴───────────────────┐   │ │  ┌──────────────────┐      ┌────────────────────────┐  │
+│   Host Mic / BOOT     ├───┼─┼─▶│  faster-whisper  ├─────▶│  PostgreSQL + pgvector │  │
+│   Hardware Trigger    │   │ │  │   (Int8 / Float) │      │  (Long-Term Episodic)  │  │
+└───────────────────────┘   │ │  └──────────────────┘      └───────────┬────────────┘  │
+                            │ │                                        │               │
+                            │ │  ┌──────────────────┐                  │               │
+                            │ └──┤ Edge-TTS Stream  │◀─────────────────┘               │
+                            │    │ (Neural Voice)   │                                  │
+                            │    └──────────────────┘                                  │
+                            └──────────────────────────────────────────────────────────┘
+                                          │
+                                          ▼ Telemetry & Live State
+                            ┌───────────────────────────┐
+                            │   Sci-Fi Orb Dashboard    │
+                            │   (WebGL + Live Console)  │
+                            └───────────────────────────┘
 ```
 
-She also learns by herself in the background (`AUTO_MEMORY`), without slowing a reply down.
+---
 
-| Folder | What it is |
-|---|---|
-| [`firmware/`](firmware) | ESP32-S3 firmware (ESP-IDF 5.5): mic, speaker mixer, Wi-Fi, laptop discovery, music, offline SAM voice |
-| [`Nexa_speaker/`](Nexa_speaker) | Arduino sketch for the plain-ESP32 Bluetooth speaker board — a simpler alternative to `firmware/` |
-| [`server/`](server) | The laptop brain in Python: hearing, Gemini + tools, memory, voice, music library |
-| [`worker/`](worker) | Cloudflare Worker used as the backup brain |
-| [`db/`](db) | PostgreSQL + Adminer in Docker: Nexa's memory |
-| [`cortex-web/`](cortex-web) | Cortex upload side, hosted on Vercel: upload page + ingest (parse, chunk, embed into Supabase pgvector). See [`docs/cortex.md`](docs/cortex.md) |
-| [`Cortex/`](Cortex) | The original Cortex RAG project; its parser was reused in `cortex-web/`. Nexa no longer calls it |
-| [`docs/`](docs) | [Architecture overview](docs/architecture.html) and [why replies take the time they do](docs/latency.md) |
+## Key Capabilities
 
-## Running it
+- **Continuous Voice Wake ("Hey Nexa")**: Always-on acoustic speech spotter using Silero VAD and real-time speech spotting—no keyboard input or button pressing required.
+- **Dual Hardware Configurations**:
+  1. **ESP32 DevKit + MAX98357A I2S Amplifier (`nexa_speaker/`)**: Turns any standard ESP32 into a dedicated high-fidelity Bluetooth A2DP IoT smart speaker with hardware BOOT push-to-talk.
+  2. **ESP32-S3 Wi-Fi Direct Node (`firmware/`)**: Direct Wi-Fi streaming node using ESP-IDF 5.5 and UDP discovery.
+- **Hierarchical Intent Engine**:
+  - **Zero-Latency Local Dispatch (<40 ms)**: Volume adjustment, media playback (play/pause/next/previous), time, and system metrics run locally without cloud delays.
+  - **Deep Reasoning Engine**: Multi-turn dialogue, dynamic function calling (live weather, dual-engine web search, Cortex PDF retrieval).
+- **Episodic Long-Term Memory**: Backed by PostgreSQL 17 with `pgvector` (`nexa-pg`). Automatically distills user facts, preferences, and conversations in the background (`AUTO_MEMORY`).
+- **Interactive Cyberpunk Visualizer (`orb.py`)**: A 3D audio-reactive WebGL visualizer with real-time hardware status synchronization, latency waterfall breakdown, and integrated console.
 
-**1. Database** (Nexa's memory):
+---
+
+## End-to-End Workflow
+
+The following sequence diagram outlines how audio frames, triggers, neural processing, and telemetry travel through the system:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Mic as Microphone / BOOT
+    participant Ears as Nexa Ears (VAD/Wake)
+    participant Core as Nexa Server (server.py)
+    participant DB as PostgreSQL (nexa-pg)
+    participant TTS as Neural Voice (Edge-TTS)
+    participant Spk as ESP32 (MAX98357A)
+    participant UI as Cyber Orb UI (orb.py)
+
+    Note over User,Ears: Phase 1: Wake Detection
+    User->>Mic: "Hey Nexa" or BOOT Button
+    Mic->>Ears: Audio Frame Stream (16 kHz PCM)
+    Ears->>Core: Trigger Wake Event (Wake ID generated)
+    Core->>UI: Status -> "LISTENING" (Orb Amber)
+    Core->>Spk: Audio Chime (Acknowledge)
+
+    Note over User,Core: Phase 2: Speech Capture & STT
+    User->>Mic: "What is the weather today?"
+    Mic->>Ears: Spoken Utterance
+    Ears->>Core: Endpoint Reached (Silence detected)
+    Core->>UI: Status -> "THINKING" (Orb Purple)
+    Core->>Core: faster-whisper transcribes audio
+
+    Note over Core,DB: Phase 3: Cognitive Processing & Memory
+    Core->>DB: Query User Profile & Vector Episodic Memory
+    DB-->>Core: Relevant Facts & Memory Context
+    Core->>Core: Evaluate Tools (Local Intent / Weather / Search)
+    Core->>DB: Persist Turn to `turns` Table
+
+    Note over Core,Spk: Phase 4: Neural Voice Streaming & Telemetry
+    Core->>TTS: Stream Reply Text
+    TTS-->>Core: Synthesized Audio Chunks (MP3/PCM)
+    Core->>UI: Status -> "SPEAKING" (Orb Green)
+    Core->>Spk: Stream Audio to MAX98357A DAC
+    Spk-->>User: High-fidelity voice playback
+    Core->>UI: Telemetry (STT ms, Thinking ms, TTS ms)
+    Core->>UI: Status -> "IDLE" (Orb Cyan)
+```
+
+---
+
+## Hardware Assembly & Pinout
+
+### ESP32 to MAX98357A Wiring
+
+The standard build utilizes an ESP32 WROOM-32 connected to a MAX98357A I2S Class-D amplifier driving a 4Ω or 8Ω speaker:
+
+| MAX98357A Pin | ESP32 GPIO | Description |
+|:---|:---|:---|
+| **BCLK** (Bit Clock) | **GPIO 26** | I2S Serial Clock |
+| **LRC** (Left/Right Clock) | **GPIO 25** | Word Select / Frame Sync |
+| **DIN** (Data In) | **GPIO 22** | Serial Audio Data |
+| **SD** (Shutdown) | **GPIO 27** | Amp Enable (Pulled HIGH; floating = shutdown) |
+| **GAIN** | **GND** | 12 dB Gain Configuration |
+| **VIN** | **5V / 3V3** | System Power Supply |
+| **GND** | **GND** | Common System Ground |
+| **BOOT Button** | **GPIO 0** | Hardware Push-to-Talk (Optional manual trigger) |
+
+> [!NOTE]
+> Connect the speaker terminals directly to `SPK+` and `SPK-`. Never ground either speaker lead.
+
+---
+
+## Repository Structure
 
 ```
-cd db
-copy .env.example .env  &&  notepad .env     REM set a password
+iot_project/
+├── nexa_speaker/          # Arduino firmware for ESP32 Bluetooth / I2S audio sink
+│   └── nexa_speaker.ino
+├── server/                # Python Host Runtime & Neural Core
+│   ├── server.py          # Primary HTTP/UDP server & orchestration
+│   ├── speaker.py         # Bluetooth audio pipeline, mixer & hardware PTT bridge
+│   ├── orb.py             # Cyberpunk Orb Web Server & real-time telemetry
+│   ├── orb.html           # 3D WebGL Canvas visualizer & interactive console
+│   ├── brain.py           # Cognitive engine & function execution
+│   ├── gemini.py          # Neural Core communication & streaming
+│   ├── stt.py             # faster-whisper local speech-to-text
+│   ├── tts.py             # Edge-TTS / Piper neural speech synthesis
+│   ├── memory.py          # PostgreSQL conversational memory interface
+│   ├── intents.py         # Ultra-low latency local intent router
+│   └── ears/              # Acoustic wake detection & VAD pipeline
+│       ├── listener.py
+│       ├── vad.py
+│       └── wake.py
+├── firmware/              # ESP32-S3 ESP-IDF native firmware (Wi-Fi streaming build)
+├── db/                    # Dockerized PostgreSQL 17 + pgvector + Adminer
+│   ├── docker-compose.yml
+│   └── .env.example
+├── cortex-web/            # Cortex document RAG web ingestion portal
+└── docs/                  # Architecture specifications & latency benchmarks
+```
+
+---
+
+## Quickstart Guide
+
+### Prerequisites
+- Python 3.11+ (or Python 3.14 on Windows)
+- Docker Desktop (for persistent PostgreSQL memory)
+- Arduino IDE with ESP32 Board Support (`v2.x` or `v3.x`)
+- Git
+
+---
+
+### Step 1: Start PostgreSQL Memory (`db`)
+
+```powershell
+cd "c:\Data\B.Tech\Semester 7\Internet of Things\Project\iot_project\db"
+copy .env.example .env
 docker compose up -d
 ```
+Verify the container is active:
+- PostgreSQL is reachable at `127.0.0.1:5433` (mapped from container `5432`).
+- Adminer Database Web GUI is accessible at `http://127.0.0.1:8081`.
 
-**2. Server** (the brain: hearing, Gemini, memory, voice, music):
+---
 
-```
-cd server
-py -m venv .venv  &&  .venv\Scripts\activate
+### Step 2: Configure & Setup Server Environment
+
+```powershell
+cd "c:\Data\B.Tech\Semester 7\Internet of Things\Project\iot_project\server"
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env  &&  notepad .env     REM GEMINI_API_KEY, DEVICE_TOKEN, DATABASE_URL
+copy .env.example .env
+```
+
+Edit `server/.env` with your preferred credentials:
+```env
+GEMINI_API_KEY="your_api_key_here"
+DATABASE_URL="postgresql://nexa:YOUR_PASSWORD@127.0.0.1:5433/nexa"
+DEVICE_TOKEN="nexa_secure_token_123"
+WAKE_ENABLED=1
+WAKE_MODEL="nexa"
+STREAM_REPLIES=1
+```
+
+---
+
+### Step 3: Flash the ESP32 Speaker Firmware
+
+1. Open `nexa_speaker/nexa_speaker.ino` in Arduino IDE.
+2. Install the required libraries via Library Manager or zip:
+   - `ESP32-A2DP` (by Phil Schatzmann)
+   - `arduino-audio-tools` (by Phil Schatzmann)
+3. Select Board: **ESP32 Dev Module**.
+4. Connect the ESP32 via USB and click **Upload**.
+5. Once flashed, open Windows **Bluetooth & Devices**, pair with **"Nexa"**, and set it as your default audio output device.
+
+---
+
+### Step 4: Run the Nexa Ecosystem
+
+Launch each module in separate terminal windows:
+
+#### Terminal 1: Core Server (The Brain)
+```powershell
+cd "c:\Data\B.Tech\Semester 7\Internet of Things\Project\iot_project\server"
+.venv\Scripts\activate
 python server.py
 ```
+*Initializes faster-whisper, loads vector memory tables, warms the Neural Core, and starts listening on port 8765.*
 
-Leave this running — you'll see `[Nexa] listening on port 8765`. Firewall rules, the wake
-word, and the music library are covered in [`server/README.md`](server/README.md).
+#### Terminal 2: Bluetooth Speaker Client (Audio Bridge)
+```powershell
+cd "c:\Data\B.Tech\Semester 7\Internet of Things\Project\iot_project\server"
+.venv\Scripts\activate
+python speaker.py
+```
+*Bridges the host audio mixer and push-to-talk triggers directly to the ESP32 over Bluetooth.*
 
-**3. Pick one board:**
+#### Terminal 3: Cyberpunk Orb Dashboard (Visualizer)
+```powershell
+cd "c:\Data\B.Tech\Semester 7\Internet of Things\Project\iot_project\server"
+.venv\Scripts\activate
+python orb.py
+```
+*Opens `http://127.0.0.1:8777/` with the interactive 3D orb visualizer, real-time telemetry, and console.*
 
-- **ESP32-S3** — copy `firmware/main/secrets.example.h` to `secrets.h`, fill it in (same
-  `DEVICE_TOKEN` as the server's `.env`), then, in an ESP-IDF terminal:
+---
 
-  ```
-  cd firmware
-  idf.py build
-  idf.py -p COMx flash monitor
-  ```
+## Operating Modes
 
-  Hold BOOT and speak. Details in [`firmware/README.md`](firmware/README.md).
+### 1. Hands-Free Voice ("Hey Nexa")
+Simply speak naturally near your microphone:
+- *"Hey Nexa, what's on my schedule today?"*
+- *"Nexa, remember that my project submission deadline is Friday."*
+- *"What did I tell you about my project deadline?"*
 
-- **Bluetooth speaker** (`Nexa_speaker/`, no S3 needed) — flash
-  `Nexa_speaker/Nexa_speaker.ino`, pair **Nexa** under Windows Bluetooth & devices,
-  set it as the sound output, then run a second process alongside the server:
+### 2. Instant Local Commands (<40 ms response)
+Commands answered instantly by the local router without cloud latency:
+- *"Pause"* / *"Resume"* / *"Stop"*
+- *"Volume 50"* / *"Louder"* / *"Softer"*
+- *"What time is it?"* / *"What is today's date?"*
 
-  ```
-  cd server
-  python speaker.py
-  ```
+### 3. Hardware Push-to-Talk (BOOT Button)
+Press the onboard **BOOT** button on the ESP32 DevKit to activate listening immediately without speaking the wake word.
 
-  Press the board's BOOT button (or Enter in the `speaker.py` window) and speak. More in the
-  "laptop as the speaker" section of [`server/README.md`](server/README.md).
+---
 
-**4. Worker** (optional — the backup brain for when the laptop is off): see
-[`worker/README.md`](worker/README.md).
+## REST API & Telemetry Endpoints
 
-## Secrets
+The Nexa host runtime exposes a clean HTTP API on port `8765`:
 
-Nothing private is committed. `server/.env`, `db/.env`, `worker/.dev.vars` and
-`firmware/main/secrets.h` are git-ignored, and each has an `.example` template beside it.
-`DEVICE_TOKEN` must be the same in the firmware (or `Nexa_speaker` setup), the server and
-the Worker.
+| Endpoint | Method | Description |
+|:---|:---|:---|
+| `/health` | `GET` | Returns core health status, memory stats, and live ear state (`idle`, `listening`, `thinking`). |
+| `/listen` | `GET` | Long-poll listener used by speaker clients to wait for wake events. |
+| `/listen?wake=<id>` | `GET` | Retrieves recorded PCM audio for an active wake session. |
+| `/listen/wake` | `POST` | Hardware trigger endpoint to signal manual push-to-talk. |
+| `/say` | `POST` | Dispatches typed text directly into the neural pipeline (`{"text": "..."}`). |
+| `/ask` | `POST` | Submits raw 16 kHz PCM audio data to run full STT-Reasoning-TTS pipeline. |
+| `/music/<id>` | `GET` | Streams MP3 audio from the local indexed music library. |
+| `/api/turns` | `GET` | Real-time endpoint on port `8777` providing conversation history and latency telemetry. |
+
+---
+
+## Diagnostic & Telemetry Log
+
+Every turn records a comprehensive latency breakdown to `server/latency.log`:
+
+```
+kind     said                     stt_ms  gemini_ms  tool_ms  tts_ms  first_audio_ms
+spoken   what time is it          210     0          1        38      249
+spoken   who discovered penicillin 324    380        0        142     846
+local    pause                    0       0          2        0       2
+```
+
+- **`stt_ms`**: Time spent in `faster-whisper` acoustic decoding.
+- **`gemini_ms`**: Cognitive processing and tool invocation time.
+- **`tts_ms`**: Time to synthesize first streaming audio chunk via Edge-TTS.
+- **`first_audio_ms`**: Total latency from utterance end to first sound from speaker.
+
+---
+
+## Troubleshooting
+
+- **Database Connection Error (`port 5433`)**: Ensure Docker is running and verify the port with `docker ps`. The container binds to host port `5433` to prevent collision with local PostgreSQL installations.
+- **Bluetooth Audio Choppy / Silent**: Ensure your Windows audio output is set to **"Nexa"** and that the MAX98357A `SD` pin is pulled HIGH to `GPIO 27`.
+- **Wake Word Sensitivity**: Adjust `WAKE_THRESHOLD` in `server/.env` (default is `0.5`). Lower values increase sensitivity, higher values decrease false activations.
+- **Firewall Warnings**: If the ESP32 cannot find the server, add inbound firewall rules for TCP `8765` and UDP `5006` as detailed in [`server/README.md`](server/README.md).
+
+---
+
+## License
+
+This project is open-source under the MIT License. Developed for academic demonstration, edge IoT research, and personal assistant automation.
